@@ -1,4 +1,5 @@
 {% extends 'clima/base.html' %}
+{% load l10n %}
 
 {% block title %}Inicio | Clima Paraguay{% endblock %}
 
@@ -586,7 +587,7 @@
 
             const temperaturas = [
                 {% for hora in pronostico.horas %}
-                    {{ hora.temperatura }},
+                    {{ hora.temperatura|unlocalize }},
                 {% endfor %}
             ];
 

@@ -68,16 +68,30 @@ def obtener_clima_por_coordenadas(lat, lon):
 def _mapear_pronostico(data):
     lista = data.get('list', [])
 
-    pronostico_horas = []
-    for item in lista[:8]:
-        pronostico_horas.append({
-            'hora': datetime.fromtimestamp(item['dt']).strftime('%H:%M'),
-            'fecha': datetime.fromtimestamp(item['dt']).strftime('%d/%m'),
-            'temperatura': round(item['main']['temp'], 1),
-            'descripcion': item['weather'][0]['description'],
-            'icono': item['weather'][0]['icon'],
-        })
+    # Ordenar por fecha por seguridad
+    lista = sorted(lista, key=lambda x: x['dt'])
 
+    # ✅ Tomar solo próximas horas futuras
+    now = datetime.now()
+    pronostico_horas = []
+
+    for item in lista:
+        fecha_hora = datetime.fromtimestamp(item['dt'])
+
+        if fecha_hora > now:
+            pronostico_horas.append({
+                'hora': fecha_hora.strftime('%H:%M'),
+                'fecha': fecha_hora.strftime('%d/%m'),
+                'temperatura': round(item['main']['temp'], 1),
+                'descripcion': item['weather'][0]['description'],
+                'icono': item['weather'][0]['icon'],
+            })
+
+        # Solo próximas 24h (8 bloques de 3 horas)
+        if len(pronostico_horas) == 8:
+            break
+
+    # ✅ Agrupar días correctamente
     dias_dict = {}
     for item in lista:
         fecha_obj = datetime.fromtimestamp(item['dt'])
@@ -85,7 +99,7 @@ def _mapear_pronostico(data):
         dias_dict.setdefault(fecha_clave, []).append(item)
 
     pronostico_dias = []
-    for fecha_clave, items in dias_dict.items():
+    for _, items in dias_dict.items():
         item_medio_dia = None
 
         for item in items:
