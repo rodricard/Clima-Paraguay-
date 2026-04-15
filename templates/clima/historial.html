@@ -1,0 +1,64 @@
+{% extends 'clima/base.html' %}
+
+{% block title %}Historial | Clima Paraguay{% endblock %}
+
+{% block content %}
+    <h1 class="page-title">Historial de consultas</h1>
+    <p class="page-subtitle">
+        Busca, revisa, marca favoritas y elimina consultas almacenadas.
+    </p>
+
+    <form method="get" class="search-form">
+        <input type="text" name="q" placeholder="Buscar ciudad..." value="{{ busqueda }}">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+
+    <div class="section-actions">
+        <a href="{% url 'vaciar_historial' %}" class="btn-small btn-delete clear-link">🗑 Vaciar historial</a>
+    </div>
+
+    {% if consultas %}
+        <div class="table-card">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ciudad</th>
+                            <th>País</th>
+                            <th>Temperatura</th>
+                            <th>Descripción</th>
+                            <th>Fecha</th>
+                            <th>Favorita</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for consulta in consultas %}
+                            <tr>
+                                <td><strong>{{ consulta.ciudad }}</strong></td>
+                                <td>{{ consulta.pais }}</td>
+                                <td><span class="badge-temp">{{ consulta.temperatura }} °C</span></td>
+                                <td style="text-transform: capitalize;">{{ consulta.descripcion }}</td>
+                                <td>{{ consulta.fecha_consulta|date:"d/m/Y H:i" }}</td>
+                                <td>{% if consulta.favorita %}⭐{% else %}—{% endif %}</td>
+                                <td>
+                                    <div class="actions">
+                                        <a href="{% url 'detalle' consulta.id %}" class="btn-small btn-view">Detalle</a>
+                                        <a href="{% url 'toggle_favorita' consulta.id %}" class="btn-small btn-fav">
+                                            {% if consulta.favorita %}Quitar{% else %}Favorita{% endif %}
+                                        </a>
+                                        <a href="{% url 'eliminar_consulta' consulta.id %}" class="btn-small btn-delete delete-link">Eliminar</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            No hay consultas guardadas todavía.
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'clima/base.html' %}
+
+{% block title %}Favoritos | Clima Paraguay{% endblock %}
+
+{% block content %}
+    <h1 class="page-title">Ciudades favoritas</h1>
+    <p class="page-subtitle">
+        Aquí se muestran únicamente las consultas marcadas como favoritas.
+    </p>
+
+    {% if consultas %}
+        <div class="favorite-grid">
+            {% for consulta in consultas %}
+                <div class="favorite-card">
+                    <h3>{{ consulta.ciudad }}</h3>
+                    <div class="favorite-temp">{{ consulta.temperatura }} °C</div>
+                    <p class="favorite-desc">{{ consulta.descripcion }}</p>
+                    <p><strong>País:</strong> {{ consulta.pais }}</p>
+                    <p><strong>Fecha:</strong> {{ consulta.fecha_consulta|date:"d/m/Y H:i" }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            No tienes ciudades favoritas todavía.
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'clima/base.html' %}
+
+{% block title %}Estadísticas | Clima Paraguay{% endblock %}
+
+{% block content %}
+    <h1 class="page-title">Estadísticas del sistema</h1>
+    <p class="page-subtitle">
+        Resumen general de las consultas almacenadas.
+    </p>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total de consultas</h3>
+            <p>{{ total_consultas }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Temperatura promedio</h3>
+            <p>
+                {% if temperatura_promedio %}
+                    {{ temperatura_promedio|floatformat:1 }} °C
+                {% else %}
+                    0 °C
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Ciudad más buscada</h3>
+            <p>
+                {% if ciudad_mas_buscada %}
+                    {{ ciudad_mas_buscada.ciudad }}
+                {% else %}
+                    Sin datos
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Total favoritas</h3>
+            <p>{{ total_favoritas }}</p>
+        </div>
+    </div>
+
+    {% if consultas %}
+        <div class="chart-card">
+            <canvas id="graficoTemp"></canvas>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const datos = {
+                labels: [
+                    {% for c in consultas %}
+                        "{{ c.ciudad }}",
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: 'Temperatura °C',
+                    data: [
+                        {% for c in consultas %}
+                            {{ c.temperatura }},
+                        {% endfor %}
+                    ],
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: false
+                }]
+            };
+
+            new Chart(document.getElementById('graficoTemp'), {
+                type: 'line',
+                data: datos,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#1e293b'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#1e293b'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#1e293b'
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+    {% endif %}
+{% endblock %}

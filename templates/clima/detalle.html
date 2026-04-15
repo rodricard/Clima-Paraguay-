@@ -1,0 +1,48 @@
+{% extends 'clima/base.html' %}
+
+{% block title %}Detalle | Clima Paraguay{% endblock %}
+
+{% block content %}
+    <h1 class="page-title">Detalle de consulta</h1>
+    <p class="page-subtitle">
+        Visualiza toda la información guardada de una consulta específica.
+    </p>
+
+    <div class="weather-card">
+        <div class="weather-left">
+            <h2>{{ consulta.ciudad }}, {{ consulta.pais }}</h2>
+            <div class="temp">{{ consulta.temperatura }} °C</div>
+            <div class="desc">{{ consulta.descripcion }}</div>
+
+            <div class="mini-grid">
+                <div class="mini-box">
+                    <span class="label">Humedad</span>
+                    <span class="value">{{ consulta.humedad }}%</span>
+                </div>
+                <div class="mini-box">
+                    <span class="label">Latitud</span>
+                    <span class="value">{{ consulta.latitud }}</span>
+                </div>
+                <div class="mini-box">
+                    <span class="label">Longitud</span>
+                    <span class="value">{{ consulta.longitud }}</span>
+                </div>
+                <div class="mini-box">
+                    <span class="label">Fecha</span>
+                    <span class="value">{{ consulta.fecha_consulta|date:"d/m/Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="weather-right">
+            <img src="https://openweathermap.org/img/wn/{{ consulta.icono }}@4x.png" alt="Icono del clima">
+            <p class="weather-note">
+                {% if consulta.favorita %}
+                    ⭐ Esta ciudad está en favoritos
+                {% else %}
+                    No está marcada como favorita
+                {% endif %}
+            </p>
+        </div>
+    </div>
+{% endblock %}
