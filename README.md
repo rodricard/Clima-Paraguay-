@@ -23,4 +23,7 @@ Aplicación web desarrollada con Django que permite consultar el clima en tiempo
 ## 📍 Autor
 
 Rodrigo Cardozo 
-Universidad del Norte - 2026
+
+Universidad del Norte
+
+2026
