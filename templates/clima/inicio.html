@@ -5,537 +5,262 @@
 
 {% block content %}
 <style>
-    .hero-weather {
-        text-align: center;
-        margin-bottom: 28px;
-        animation: fadeHero 0.7s ease;
+    .hero { text-align: center; margin-bottom: 32px; }
+
+    .greeting-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 7px 16px; border-radius: 999px;
+        background: rgba(59,130,246,0.12);
+        border: 1px solid rgba(59,130,246,0.22);
+        color: var(--accent-light);
+        font-size: 13px; font-weight: 700;
+        margin-bottom: 16px;
     }
 
-    .hero-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 18px;
-        border-radius: 999px;
-        background: rgba(255,255,255,0.14);
-        border: 1px solid rgba(255,255,255,0.2);
-        color: white;
-        font-weight: 700;
-        margin-bottom: 18px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+    .hero h1 {
+        font-size: 42px; font-weight: 900;
+        color: var(--text-primary);
+        letter-spacing: -1.5px; margin-bottom: 10px;
     }
 
-    .hero-weather .page-title {
-        margin-bottom: 8px;
+    .hero p {
+        color: var(--text-secondary);
+        font-size: 15px; max-width: 580px;
+        margin: 0 auto 24px; line-height: 1.65;
     }
 
-    .hero-highlight {
-        color: rgba(255,255,255,0.92);
-        font-size: 15px;
-        max-width: 820px;
-        margin: 0 auto 18px auto;
-        line-height: 1.7;
+    .info-strip {
+        display: grid; grid-template-columns: repeat(2, 1fr);
+        gap: 10px; max-width: 540px; margin: 0 auto 24px;
     }
 
-    .welcome-strip {
-        max-width: 900px;
-        margin: 0 auto 20px auto;
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
+    .info-chip {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 12px 16px; text-align: left;
     }
 
-    .welcome-card {
-        background: rgba(255,255,255,0.14);
-        border: 1px solid rgba(255,255,255,0.18);
-        backdrop-filter: blur(12px);
-        border-radius: 20px;
-        padding: 16px;
-        text-align: center;
-        color: white;
-        box-shadow: 0 10px 24px rgba(15,23,42,0.12);
+    .info-chip .lbl {
+        font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.6px;
+        color: var(--text-muted); margin-bottom: 4px;
     }
 
-    .welcome-card .label {
-        font-size: 13px;
-        font-weight: 700;
-        opacity: 0.9;
-        margin-bottom: 6px;
-    }
-
-    .welcome-card .value {
-        font-size: 18px;
-        font-weight: 900;
+    .info-chip .val {
+        font-size: 15px; font-weight: 800;
+        color: var(--text-primary);
     }
 
     .search-shell {
-        max-width: 860px;
-        margin: 0 auto 12px auto;
-        padding: 16px;
-        border-radius: 22px;
-        background: rgba(255,255,255,0.12);
-        border: 1px solid rgba(255,255,255,0.18);
-        backdrop-filter: blur(12px);
-        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
+        max-width: 620px; margin: 0 auto;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-bright);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+    }
+
+    .autocomplete-wrap { position: relative; display: inline-block; flex: 1; }
+    .autocomplete-wrap input { width: 100%; }
+
+    .autocomplete-list {
+        position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-bright);
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow);
+        z-index: 500; overflow: hidden; display: none;
+    }
+    .autocomplete-list.visible { display: block; }
+    .autocomplete-item {
+        padding: 11px 16px; cursor: pointer;
+        font-size: 14px; font-weight: 600;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--border-soft);
+        transition: background 0.15s, color 0.15s;
+    }
+    .autocomplete-item:last-child { border-bottom: none; }
+    .autocomplete-item:hover, .autocomplete-item.active {
+        background: var(--bg-hover); color: var(--text-primary);
+    }
+
+    .search-row {
+        display: flex; gap: 10px; align-items: center;
     }
 
     .search-actions {
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-        flex-wrap: wrap;
-        margin-top: 12px;
+        display: flex; justify-content: center;
+        margin-top: 10px;
     }
 
-    .search-form {
-        margin-bottom: 0;
-    }
-
-    .search-form input {
-        width: 380px;
-    }
-
-    .geo-button {
-        min-width: 220px;
-    }
-
-    .weather-card {
-        position: relative;
-        overflow: hidden;
-    }
-
+    /* Weather card overrides */
+    .weather-card { position: relative; overflow: hidden; }
     .weather-card::before {
         content: "";
-        position: absolute;
-        top: -80px;
-        right: -80px;
-        width: 220px;
-        height: 220px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(37,99,235,0.14), transparent 70%);
+        position: absolute; top: -60px; right: -60px;
+        width: 200px; height: 200px; border-radius: 50%;
+        background: radial-gradient(circle, var(--accent-glow), transparent 70%);
         pointer-events: none;
-    }
-
-    .weather-left,
-    .weather-right {
-        position: relative;
-        z-index: 1;
     }
 
     .city-line {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-bottom: 8px;
-    }
-
-    .city-chip,
-    .desc-chip {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 14px;
-        border-radius: 999px;
-        font-size: 13px;
-        font-weight: 800;
+        display: flex; align-items: center;
+        gap: 10px; flex-wrap: wrap; margin-bottom: 6px;
     }
 
     .city-chip {
-        background: #dbeafe;
-        color: #1d4ed8;
+        display: inline-flex; align-items: center;
+        padding: 4px 12px; border-radius: 999px;
+        font-size: 12px; font-weight: 700;
+        background: rgba(59,130,246,0.15);
+        color: var(--accent-light);
+        border: 1px solid rgba(59,130,246,0.20);
     }
 
     .desc-chip {
-        background: #f1f5f9;
-        color: #475569;
+        display: inline-flex; align-items: center;
+        padding: 4px 12px; border-radius: 999px;
+        font-size: 12px; font-weight: 700;
+        background: var(--bg-elevated);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
         text-transform: capitalize;
     }
 
-    .temp-row {
-        display: flex;
-        align-items: end;
-        gap: 14px;
-        flex-wrap: wrap;
-        margin: 14px 0 6px 0;
-    }
-
-    .temp {
-        margin: 0;
-        font-size: 64px;
-        letter-spacing: -1px;
-    }
-
-    .temp-extra {
-        color: var(--muted);
-        font-size: 15px;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-
-    .desc {
-        display: none;
-    }
-
-    .info-block-title {
-        color: var(--secondary);
-        font-size: 18px;
-        font-weight: 800;
-        margin: 20px 0 14px 0;
-    }
-
-    .mini-box {
-        position: relative;
-        overflow: hidden;
-        background: linear-gradient(180deg, #ffffff, #f8fafc);
-    }
-
-    .mini-box::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: 18px;
-        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.15);
-        pointer-events: none;
-    }
-
-    .mini-box:hover {
-        transform: translateY(-3px) scale(1.01);
-        box-shadow: 0 14px 26px rgba(15,23,42,0.08);
-    }
-
-    .weather-illustration {
-        width: 190px;
-        height: 190px;
-        display: grid;
-        place-items: center;
-        border-radius: 50%;
-        background: radial-gradient(circle at center, rgba(37,99,235,0.10), rgba(37,99,235,0.02) 70%, transparent 72%);
-        margin-bottom: 8px;
-    }
-
-    .weather-right img {
-        width: 180px;
-        height: 180px;
-    }
-
-    .weather-meta {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-top: 14px;
-    }
-
-    .meta-pill {
-        background: #eff6ff;
-        color: #1d4ed8;
-        border-radius: 999px;
-        padding: 8px 14px;
-        font-size: 13px;
-        font-weight: 800;
-    }
-
-    .forecast-section {
-        margin-top: 30px;
-        animation: fadeHero 0.7s ease;
-    }
-
-    .section-title {
-        margin-bottom: 16px;
-        position: relative;
-    }
-
-    .section-title::after {
-        content: "";
-        display: block;
-        width: 90px;
-        height: 4px;
-        border-radius: 999px;
-        background: rgba(255,255,255,0.75);
-        margin: 10px auto 0 auto;
-    }
-
     .unit-toggle {
-        display: inline-flex;
-        align-items: center;
-        gap: 0;
-        background: rgba(255,255,255,0.18);
-        border: 1px solid rgba(255,255,255,0.28);
-        border-radius: 999px;
-        overflow: hidden;
-        margin-left: 12px;
-        vertical-align: middle;
+        display: inline-flex; align-items: center;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-bright);
+        border-radius: 999px; overflow: hidden;
     }
-
     .unit-toggle button {
-        background: none;
-        border: none;
-        color: white;
-        font-weight: 800;
-        font-size: 13px;
-        padding: 7px 14px;
-        cursor: pointer;
-        transition: background 0.2s ease;
+        background: none; border: none;
+        color: var(--text-muted);
+        font-family: 'Inter', sans-serif;
+        font-weight: 700; font-size: 12px;
+        padding: 5px 13px; cursor: pointer;
+        transition: background 0.2s, color 0.2s;
     }
-
     .unit-toggle button.active {
-        background: rgba(255,255,255,0.30);
+        background: var(--accent);
+        color: white;
         border-radius: 999px;
     }
+    .unit-toggle button:hover:not(.active) { color: var(--text-primary); }
 
-    .unit-toggle button:hover:not(.active) {
-        background: rgba(255,255,255,0.12);
+    .temp-row {
+        display: flex; align-items: flex-end;
+        gap: 16px; flex-wrap: wrap; margin: 16px 0 6px;
     }
 
-    .empty-hint {
-        max-width: 760px;
-        margin: 24px auto 0 auto;
-        padding: 20px;
-        border-radius: 20px;
-        text-align: center;
-        color: white;
-        background: rgba(255,255,255,0.10);
-        border: 1px solid rgba(255,255,255,0.16);
-        backdrop-filter: blur(12px);
+    .temp-feels {
+        font-size: 14px; font-weight: 600;
+        color: var(--text-muted); margin-bottom: 8px;
     }
 
-    .autocomplete-wrap {
-        position: relative;
-        display: inline-block;
+    .section-label {
+        font-size: 12px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.6px;
+        color: var(--text-muted); margin: 20px 0 12px;
     }
 
-    .autocomplete-wrap input {
-        width: 380px;
+    .meta-pills {
+        display: flex; gap: 8px; flex-wrap: wrap;
+        justify-content: center; margin-top: 10px;
+    }
+    .meta-pill {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 5px 12px;
+        font-size: 12px; font-weight: 700;
+        color: var(--text-secondary);
     }
 
-    .autocomplete-list {
-        position: absolute;
-        top: calc(100% + 6px);
-        left: 0;
-        right: 0;
-        background: white;
-        border-radius: 14px;
-        box-shadow: 0 12px 30px rgba(15,23,42,0.14);
-        z-index: 500;
-        overflow: hidden;
-        display: none;
-    }
-
-    .autocomplete-list.visible {
-        display: block;
-    }
-
-    .autocomplete-item {
-        padding: 12px 16px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--secondary);
-        transition: background 0.18s ease;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-    .autocomplete-item:last-child {
-        border-bottom: none;
-    }
-
-    .autocomplete-item:hover,
-    .autocomplete-item.active {
-        background: #eff6ff;
-        color: #1d4ed8;
-    }
-
-    .hourly-chart-card {
-        margin-top: 24px;
-        background: rgba(255,255,255,0.97);
-        border-radius: 24px;
-        padding: 22px;
-        box-shadow: var(--shadow);
-        animation: fadeHero 0.7s ease;
-    }
-
-    .chart-title {
-        font-size: 18px;
-        font-weight: 800;
-        color: var(--secondary);
-        text-align: center;
-        margin-bottom: 14px;
-    }
-
-    .map-card {
-        margin-top: 24px;
-        background: rgba(255,255,255,0.97);
-        border-radius: 24px;
-        overflow: hidden;
-        box-shadow: var(--shadow);
-        animation: fadeHero 0.7s ease;
-    }
-
-    .map-card-header {
-        padding: 18px 22px 0 22px;
-        font-size: 18px;
-        font-weight: 800;
-        color: var(--secondary);
-        text-align: center;
-        margin-bottom: 14px;
-    }
-
-    #mapa-ciudad {
-        height: 340px;
-        width: 100%;
-        border-radius: 0 0 24px 24px;
-    }
-
+    /* Alerts dark */
     .alerta-climatica {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 16px 20px;
-        border-radius: 18px;
-        font-weight: 700;
-        font-size: 15px;
-        margin: 12px auto;
-        max-width: 860px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.10);
-        animation: fadeHero 0.4s ease;
-        border-left: 5px solid transparent;
+        display: flex; align-items: center; gap: 14px;
+        padding: 14px 18px; border-radius: var(--radius-sm);
+        font-weight: 600; font-size: 14px;
+        margin: 10px 0; border-left: 4px solid transparent;
+        animation: fadeUp 0.35s ease;
+    }
+    .alerta-icon { font-size: 22px; flex-shrink: 0; }
+    .alerta-texto strong { display: block; font-weight: 800; font-size: 15px; margin-bottom: 2px; }
+    .alerta-tormenta { background: rgba(99,102,241,0.12); color: #c7d2fe; border-left-color: #6366f1; }
+    .alerta-calor    { background: rgba(245,158,11,0.12);  color: #fde68a; border-left-color: #f59e0b; }
+    .alerta-frio     { background: rgba(59,130,246,0.12);  color: #bfdbfe; border-left-color: #3b82f6; }
+    .alerta-lluvia   { background: rgba(14,165,233,0.12);  color: #bae6fd; border-left-color: #0ea5e9; }
+    .alerta-viento   { background: rgba(34,197,94,0.12);   color: #bbf7d0; border-left-color: #22c55e; }
+
+    /* Hourly chart */
+    .hourly-chart-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px; margin-top: 16px;
+    }
+    .chart-title {
+        font-size: 14px; font-weight: 700;
+        color: var(--text-muted); margin-bottom: 14px;
+        text-transform: uppercase; letter-spacing: 0.5px;
     }
 
-    .alerta-climatica .alerta-icon {
-        font-size: 26px;
-        flex-shrink: 0;
+    /* Map card subtitle */
+    .map-subtitle {
+        font-size: 12px; font-weight: 500;
+        color: var(--text-muted); margin-top: 2px;
     }
 
-    .alerta-climatica .alerta-texto strong {
-        display: block;
-        font-size: 16px;
-        margin-bottom: 2px;
+    /* Empty hint */
+    .empty-hint {
+        text-align: center;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 28px; color: var(--text-secondary);
+        font-size: 15px; font-weight: 500;
+        margin-bottom: 24px;
     }
-
-    .alerta-tormenta {
-        background: rgba(30, 27, 75, 0.92);
-        color: #e0e7ff;
-        border-left-color: #6366f1;
-    }
-
-    .alerta-calor {
-        background: rgba(254, 243, 199, 0.97);
-        color: #92400e;
-        border-left-color: #f59e0b;
-    }
-
-    .alerta-frio {
-        background: rgba(219, 234, 254, 0.97);
-        color: #1e3a8a;
-        border-left-color: #3b82f6;
-    }
-
-    .alerta-lluvia {
-        background: rgba(224, 242, 254, 0.97);
-        color: #075985;
-        border-left-color: #0ea5e9;
-    }
-
-    .alerta-viento {
-        background: rgba(240, 253, 244, 0.97);
-        color: #14532d;
-        border-left-color: #22c55e;
-    }
-
-    @keyframes fadeHero {
-        from {
-            opacity: 0;
-            transform: translateY(14px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @media (max-width: 900px) {
-        .temp {
-            font-size: 54px;
-        }
-
-        .search-form input {
-            width: 100%;
-        }
-
-        .weather-illustration {
-            width: 170px;
-            height: 170px;
-        }
-    }
+    .empty-hint strong { color: var(--text-primary); }
 
     @media (max-width: 768px) {
-        .hero-badge {
-            font-size: 13px;
-            padding: 8px 14px;
-        }
-
-        .temp {
-            font-size: 48px;
-        }
-
-        .temp-row {
-            justify-content: center;
-            text-align: center;
-        }
-
-        .city-line {
-            justify-content: center;
-        }
-
-        .info-block-title {
-            text-align: center;
-        }
-
-        .welcome-strip {
-            grid-template-columns: 1fr;
-        }
+        .hero h1 { font-size: 30px; }
+        .info-strip { grid-template-columns: 1fr; }
+        .search-row { flex-direction: column; }
+        .search-row .autocomplete-wrap { width: 100%; }
+        .temp { font-size: 52px; }
     }
 </style>
 
-<div class="hero-weather">
-    <div class="hero-badge" id="saludoTop">Hola</div>
-    <h1 class="page-title">Consulta el clima en tiempo real</h1>
-    <p class="hero-highlight">
-        Busca una ciudad, obtén información detallada del clima actual y visualiza el pronóstico de las próximas horas y los siguientes días con una experiencia más moderna y visual.
-    </p>
+<!-- Hero / Search -->
+<div class="hero">
+    <div class="greeting-badge" id="saludoTop">Hola</div>
+    <h1>Consulta el clima en tiempo real</h1>
+    <p>Buscá una ciudad o hacé click en el mapa para ver el clima actual, pronóstico por horas y los próximos días.</p>
 
-    <div class="welcome-strip">
-        <div class="welcome-card">
-            <div class="label">Fecha y hora</div>
-            <div class="value" id="fechaHoraActual">--/--/---- • --:--</div>
+    <div class="info-strip">
+        <div class="info-chip">
+            <div class="lbl">Fecha y hora</div>
+            <div class="val" id="fechaHoraActual">--/--/---- • --:--</div>
         </div>
-
-        <div class="welcome-card">
-            <div class="label">Última ciudad</div>
-            <div class="value">
-                {% if clima %}
-                    {{ clima.ciudad }}
-                {% else %}
-                    Sin consulta
-                {% endif %}
-            </div>
+        <div class="info-chip">
+            <div class="lbl">Última ciudad</div>
+            <div class="val">{% if clima %}{{ clima.ciudad }}{% else %}Sin consulta{% endif %}</div>
         </div>
     </div>
 
     <div class="search-shell">
-        <form method="post" class="search-form" id="formBusqueda">
+        <form method="post" class="search-row" id="formBusqueda">
             {% csrf_token %}
             <div class="autocomplete-wrap">
                 {{ form.ciudad }}
                 <div class="autocomplete-list" id="autocompleteList"></div>
             </div>
-            <button type="submit" class="btn btn-primary">🔎 Buscar clima</button>
+            <button type="submit" class="btn btn-primary">Buscar</button>
         </form>
-
         <div class="search-actions">
-            <button type="button" class="btn btn-outline-light geo-button" id="geoButton">
+            <button type="button" class="btn btn-ghost" id="geoButton" style="margin-top:2px;font-size:13px;padding:9px 16px;">
                 📍 Usar mi ubicación
             </button>
         </div>
@@ -543,15 +268,11 @@
 </div>
 
 {% if origen_geo %}
-    <div class="alert-success">
-        Mostrando el clima de tu ubicación actual.
-    </div>
+    <div class="alert-success">📍 Mostrando el clima de tu ubicación actual.</div>
 {% endif %}
 
 {% if error %}
-    <div class="alert-error">
-        {{ error }}
-    </div>
+    <div class="alert-error">{{ error }}</div>
 {% endif %}
 
 {% if clima %}
@@ -559,58 +280,40 @@
     {% if 'torment' in clima.descripcion|lower %}
         <div class="alerta-climatica alerta-tormenta">
             <div class="alerta-icon">⛈️</div>
-            <div class="alerta-texto">
-                <strong>Alerta de tormenta</strong>
-                Se detectaron condiciones de tormenta en {{ clima.ciudad }}. Evitá salir al exterior si es posible.
-            </div>
+            <div class="alerta-texto"><strong>Alerta de tormenta</strong>Se detectaron condiciones de tormenta en {{ clima.ciudad }}. Evitá salir al exterior si es posible.</div>
         </div>
     {% endif %}
-
     {% if clima.temperatura > 38 %}
         <div class="alerta-climatica alerta-calor">
             <div class="alerta-icon">🌡️</div>
-            <div class="alerta-texto">
-                <strong>Alerta de calor extremo</strong>
-                La temperatura en {{ clima.ciudad }} supera los 38 °C. Mantenete hidratado y evitá la exposición solar directa.
-            </div>
+            <div class="alerta-texto"><strong>Calor extremo</strong>La temperatura supera los 38 °C. Mantenete hidratado y evitá la exposición solar directa.</div>
         </div>
     {% endif %}
-
     {% if clima.temperatura < 0 %}
         <div class="alerta-climatica alerta-frio">
             <div class="alerta-icon">🥶</div>
-            <div class="alerta-texto">
-                <strong>Alerta de frío extremo</strong>
-                La temperatura en {{ clima.ciudad }} está bajo cero. Abrigate bien y prestá atención a superficies heladas.
-            </div>
+            <div class="alerta-texto"><strong>Frío extremo</strong>La temperatura está bajo cero. Abrigate bien y prestá atención a superficies heladas.</div>
         </div>
     {% endif %}
-
     {% if 'lluvia intensa' in clima.descripcion|lower or 'fuertes lluvias' in clima.descripcion|lower or 'lluvia moderada' in clima.descripcion|lower %}
         <div class="alerta-climatica alerta-lluvia">
             <div class="alerta-icon">🌧️</div>
-            <div class="alerta-texto">
-                <strong>Alerta de lluvia intensa</strong>
-                Se registra {{ clima.descripcion }} en {{ clima.ciudad }}. Llevá paraguas y manejá con precaución.
-            </div>
+            <div class="alerta-texto"><strong>Lluvia intensa</strong>Se registra {{ clima.descripcion }}. Llevá paraguas y manejá con precaución.</div>
         </div>
     {% endif %}
-
     {% if clima.viento_velocidad > 15 %}
         <div class="alerta-climatica alerta-viento">
             <div class="alerta-icon">💨</div>
-            <div class="alerta-texto">
-                <strong>Alerta de vientos fuertes</strong>
-                Vientos de {{ clima.viento_velocidad }} m/s en {{ clima.ciudad }}. Tomá precauciones en espacios abiertos.
-            </div>
+            <div class="alerta-texto"><strong>Vientos fuertes</strong>Vientos de {{ clima.viento_velocidad }} m/s. Tomá precauciones en espacios abiertos.</div>
         </div>
     {% endif %}
 
+    <!-- Main weather card -->
     <div class="weather-card">
         <div class="weather-left">
             <div class="city-line">
                 <h2>{{ clima.ciudad }}, {{ clima.pais }}</h2>
-                <span class="city-chip">Ubicación consultada</span>
+                <span class="city-chip">Consultado</span>
                 <span class="desc-chip">{{ clima.descripcion }}</span>
                 <div class="unit-toggle">
                     <button id="btnCelsius" class="active" type="button">°C</button>
@@ -619,152 +322,101 @@
             </div>
 
             <div class="temp-row">
-                <div class="temp"><span class="temp-val" data-celsius="{{ clima.temperatura|unlocalize }}">{{ clima.temperatura }}</span> <span class="unit-label">°C</span></div>
-                <div class="temp-extra">
-                    Sensación térmica de <span class="temp-val" data-celsius="{{ clima.sensacion_termica|unlocalize }}">{{ clima.sensacion_termica }}</span> <span class="unit-label">°C</span>
+                <div class="temp">
+                    <span class="temp-val" data-celsius="{{ clima.temperatura|unlocalize }}">{{ clima.temperatura }}</span>
+                    <span class="unit-label">°C</span>
+                </div>
+                <div class="temp-feels">
+                    Sensación <span class="temp-val" data-celsius="{{ clima.sensacion_termica|unlocalize }}">{{ clima.sensacion_termica }}</span><span class="unit-label">°C</span>
                 </div>
             </div>
 
-            <div class="info-block-title">Resumen meteorológico</div>
+            <div class="section-label">Resumen meteorológico</div>
 
             <div class="mini-grid">
-                <div class="mini-box">
-                    <span class="label">Sensación térmica</span>
-                    <span class="value"><span class="temp-val" data-celsius="{{ clima.sensacion_termica|unlocalize }}">{{ clima.sensacion_termica }}</span> <span class="unit-label">°C</span></span>
-                </div>
-                <div class="mini-box">
-                    <span class="label">Humedad</span>
-                    <span class="value">{{ clima.humedad }}%</span>
-                </div>
-                <div class="mini-box">
-                    <span class="label">Temp. mínima</span>
-                    <span class="value"><span class="temp-val" data-celsius="{{ clima.temp_min|unlocalize }}">{{ clima.temp_min }}</span> <span class="unit-label">°C</span></span>
-                </div>
-                <div class="mini-box">
-                    <span class="label">Temp. máxima</span>
-                    <span class="value"><span class="temp-val" data-celsius="{{ clima.temp_max|unlocalize }}">{{ clima.temp_max }}</span> <span class="unit-label">°C</span></span>
-                </div>
-                <div class="mini-box">
-                    <span class="label">Viento</span>
-                    <span class="value">{{ clima.viento_velocidad }} m/s</span>
-                </div>
-                <div class="mini-box">
-                    <span class="label">Dirección viento</span>
-                    <span class="value">{{ clima.viento_direccion }}°</span>
-                </div>
-                <div class="mini-box">
-                    <span class="label">Presión</span>
-                    <span class="value">{{ clima.presion }} hPa</span>
-                </div>
-                <div class="mini-box">
-                    <span class="label">Visibilidad</span>
-                    <span class="value">{{ clima.visibilidad }} km</span>
-                </div>
-                <div class="mini-box">
-                    <span class="label">Amanecer</span>
-                    <span class="value">{{ clima.amanecer }}</span>
-                </div>
-                <div class="mini-box">
-                    <span class="label">Atardecer</span>
-                    <span class="value">{{ clima.atardecer }}</span>
-                </div>
-                <div class="mini-box">
-                    <span class="label">Latitud</span>
-                    <span class="value">{{ clima.latitud }}</span>
-                </div>
-                <div class="mini-box">
-                    <span class="label">Longitud</span>
-                    <span class="value">{{ clima.longitud }}</span>
-                </div>
+                <div class="mini-box"><span class="label">Sensación</span><span class="value"><span class="temp-val" data-celsius="{{ clima.sensacion_termica|unlocalize }}">{{ clima.sensacion_termica }}</span> <span class="unit-label">°C</span></span></div>
+                <div class="mini-box"><span class="label">Humedad</span><span class="value">{{ clima.humedad }}%</span></div>
+                <div class="mini-box"><span class="label">Mínima</span><span class="value"><span class="temp-val" data-celsius="{{ clima.temp_min|unlocalize }}">{{ clima.temp_min }}</span> <span class="unit-label">°C</span></span></div>
+                <div class="mini-box"><span class="label">Máxima</span><span class="value"><span class="temp-val" data-celsius="{{ clima.temp_max|unlocalize }}">{{ clima.temp_max }}</span> <span class="unit-label">°C</span></span></div>
+                <div class="mini-box"><span class="label">Viento</span><span class="value">{{ clima.viento_velocidad }} m/s</span></div>
+                <div class="mini-box"><span class="label">Dirección</span><span class="value">{{ clima.viento_direccion }}°</span></div>
+                <div class="mini-box"><span class="label">Presión</span><span class="value">{{ clima.presion }} hPa</span></div>
+                <div class="mini-box"><span class="label">Visibilidad</span><span class="value">{{ clima.visibilidad }} km</span></div>
+                <div class="mini-box"><span class="label">Amanecer</span><span class="value">{{ clima.amanecer }}</span></div>
+                <div class="mini-box"><span class="label">Atardecer</span><span class="value">{{ clima.atardecer }}</span></div>
+                <div class="mini-box"><span class="label">Latitud</span><span class="value">{{ clima.latitud }}</span></div>
+                <div class="mini-box"><span class="label">Longitud</span><span class="value">{{ clima.longitud }}</span></div>
             </div>
         </div>
 
         <div class="weather-right">
-            <div class="weather-illustration">
-                <img src="https://openweathermap.org/img/wn/{{ clima.icono }}@4x.png" alt="Icono del clima">
-            </div>
-            <p class="weather-note">Datos obtenidos desde OpenWeather</p>
-
-            <div class="weather-meta">
-                <span class="meta-pill">Actualizado en tiempo real</span>
+            <img src="https://openweathermap.org/img/wn/{{ clima.icono }}@4x.png" alt="Icono del clima">
+            <p class="weather-note">OpenWeather API</p>
+            <div class="meta-pills">
+                <span class="meta-pill">Tiempo real</span>
                 <span class="meta-pill">{{ clima.pais }}</span>
             </div>
         </div>
     </div>
 
     {% if pronostico.horas %}
-        <div class="forecast-section">
-            <h2 class="section-title">Próximas horas</h2>
-
-            <div class="hourly-scroll-wrap">
-                <div class="hourly-strip">
-                    {% for hora in pronostico.horas %}
-                        <div class="hourly-card">
-                            <div class="hourly-top">
-                                {% if forloop.first %}
-                                    Ahora
-                                {% else %}
-                                    {{ hora.hora }}
-                                {% endif %}
-                            </div>
-                            <div class="hourly-date">{{ hora.fecha }}</div>
-                            <img src="https://openweathermap.org/img/wn/{{ hora.icono }}@2x.png" alt="Icono">
-                            <div class="hourly-temp"><span class="temp-val" data-celsius="{{ hora.temperatura|unlocalize }}">{{ hora.temperatura }}</span> <span class="unit-label">°C</span></div>
-                            <div class="hourly-desc">{{ hora.descripcion }}</div>
-                        </div>
-                    {% endfor %}
+    <div class="forecast-section">
+        <h3 class="section-title">Próximas horas</h3>
+        <div class="hourly-scroll-wrap">
+            <div class="hourly-strip">
+                {% for hora in pronostico.horas %}
+                <div class="hourly-card">
+                    <div class="hourly-top">{% if forloop.first %}Ahora{% else %}{{ hora.hora }}{% endif %}</div>
+                    <div class="hourly-date">{{ hora.fecha }}</div>
+                    <img src="https://openweathermap.org/img/wn/{{ hora.icono }}@2x.png" alt="Icono">
+                    <div class="hourly-temp"><span class="temp-val" data-celsius="{{ hora.temperatura|unlocalize }}">{{ hora.temperatura }}</span> <span class="unit-label">°C</span></div>
+                    <div class="hourly-desc">{{ hora.descripcion }}</div>
                 </div>
-            </div>
-        </div>
-
-        <div class="hourly-chart-card">
-            <div class="chart-title">Evolución de temperatura por horas</div>
-            <canvas id="hourlyChart" height="120"></canvas>
-        </div>
-    {% endif %}
-
-    {% if pronostico.dias %}
-        <div class="forecast-section">
-            <h2 class="section-title">Próximos días</h2>
-
-            <div class="forecast-days-grid">
-                {% for dia in pronostico.dias %}
-                    <div class="day-card {% if 'lluv' in dia.descripcion|lower %}rainy{% elif 'nube' in dia.descripcion|lower %}cloudy{% elif 'torment' in dia.descripcion|lower %}storm{% elif 'despejado' in dia.descripcion|lower or 'soleado' in dia.descripcion|lower %}sunny{% else %}default{% endif %}">
-                        {% if forloop.first %}
-                            <div class="day-badge">Hoy</div>
-                        {% elif forloop.counter == 2 %}
-                            <div class="day-badge">Mañana</div>
-                        {% endif %}
-
-                        <div class="day-name">{{ dia.dia }}</div>
-                        <div class="day-date">{{ dia.fecha }}</div>
-
-                        <img src="https://openweathermap.org/img/wn/{{ dia.icono }}@2x.png" alt="Icono">
-
-                        <div class="temp-range">
-                            <div class="temp-max"><span class="temp-val" data-celsius="{{ dia.temp_max|unlocalize }}">{{ dia.temp_max }}</span> <span class="unit-label">°C</span></div>
-                            <div class="temp-min">Min: <span class="temp-val" data-celsius="{{ dia.temp_min|unlocalize }}">{{ dia.temp_min }}</span> <span class="unit-label">°C</span></div>
-                        </div>
-
-                        <div class="forecast-desc">{{ dia.descripcion }}</div>
-                    </div>
                 {% endfor %}
             </div>
         </div>
+    </div>
+
+    <div class="hourly-chart-card">
+        <div class="chart-title">Evolución de temperatura</div>
+        <canvas id="hourlyChart" height="100"></canvas>
+    </div>
     {% endif %}
+
+    {% if pronostico.dias %}
+    <div class="forecast-section">
+        <h3 class="section-title">Próximos días</h3>
+        <div class="forecast-days-grid">
+            {% for dia in pronostico.dias %}
+            <div class="day-card">
+                {% if forloop.first %}<div class="day-badge">Hoy</div>
+                {% elif forloop.counter == 2 %}<div class="day-badge">Mañana</div>{% endif %}
+                <div class="day-name">{{ dia.dia }}</div>
+                <div class="day-date">{{ dia.fecha }}</div>
+                <img src="https://openweathermap.org/img/wn/{{ dia.icono }}@2x.png" alt="Icono">
+                <div class="temp-range">
+                    <div class="temp-max"><span class="temp-val" data-celsius="{{ dia.temp_max|unlocalize }}">{{ dia.temp_max }}</span> <span class="unit-label">°C</span></div>
+                    <div class="temp-min">Min: <span class="temp-val" data-celsius="{{ dia.temp_min|unlocalize }}">{{ dia.temp_min }}</span> <span class="unit-label">°C</span></div>
+                </div>
+                <div class="forecast-desc">{{ dia.descripcion }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
 {% else %}
     <div class="empty-hint">
-        <strong>Empieza buscando una ciudad.</strong><br>
-        También podés hacer click en cualquier punto del mapa para ver el clima de ese lugar.
+        <strong>Buscá una ciudad o hacé click en el mapa</strong><br>
+        Verás el clima actual, indicadores detallados, pronóstico por horas y los próximos días.
     </div>
 {% endif %}
 
+<!-- Map -->
 <div class="map-card">
     <div class="map-card-header">
         🗺️ Explorar en el mapa
-        <span style="display:block;font-size:13px;font-weight:600;color:var(--muted);margin-top:4px;">
-            Hacé click en cualquier punto para consultar el clima de esa ubicación
-        </span>
+        <div class="map-subtitle">Hacé click en cualquier punto para consultar el clima de esa ubicación</div>
     </div>
     <div id="mapa-ciudad"></div>
 </div>
@@ -773,333 +425,179 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const geoButton = document.getElementById('geoButton');
+document.addEventListener('DOMContentLoaded', function () {
 
-        if (geoButton) {
-            geoButton.addEventListener('click', function () {
-                if (!navigator.geolocation) {
-                    alert('Tu navegador no permite geolocalización.');
-                    return;
+    // Geolocation
+    const geoButton = document.getElementById('geoButton');
+    if (geoButton) {
+        geoButton.addEventListener('click', function () {
+            if (!navigator.geolocation) { alert('Tu navegador no permite geolocalización.'); return; }
+            const loader = document.getElementById('loaderOverlay');
+            if (loader) loader.style.display = 'flex';
+            navigator.geolocation.getCurrentPosition(
+                pos => { window.location.href = `/?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`; },
+                () => { if (loader) loader.style.display = 'none'; alert('No se pudo obtener tu ubicación.'); }
+            );
+        });
+    }
+
+    // Hourly chart
+    const hourlyCanvas = document.getElementById('hourlyChart');
+    if (hourlyCanvas) {
+        const labels = [{% for hora in pronostico.horas %}"{% if forloop.first %}Ahora{% else %}{{ hora.hora }}{% endif %}",{% endfor %}];
+        const temps  = [{% for hora in pronostico.horas %}{{ hora.temperatura|unlocalize }},{% endfor %}];
+        new Chart(hourlyCanvas, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Temperatura',
+                    data: temps,
+                    borderWidth: 2.5,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(59,130,246,0.10)',
+                    borderColor: '#3b82f6',
+                    pointBackgroundColor: '#60a5fa',
+                    pointBorderColor: '#111827',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Inter', weight: '600' } } } },
+                scales: {
+                    x: { ticks: { color: '#4b5563', font: { family: 'Inter' } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                    y: { ticks: { color: '#4b5563', font: { family: 'Inter' } }, grid: { color: 'rgba(255,255,255,0.04)' } }
                 }
-
-                const loader = document.getElementById('loaderOverlay');
-                if (loader) {
-                    loader.style.display = 'flex';
-                }
-
-                navigator.geolocation.getCurrentPosition(
-                    function (position) {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        window.location.href = `/?lat=${lat}&lon=${lon}`;
-                    },
-                    function () {
-                        if (loader) {
-                            loader.style.display = 'none';
-                        }
-                        alert('No se pudo obtener tu ubicación.');
-                    }
-                );
-            });
-        }
-
-        const hourlyCanvas = document.getElementById('hourlyChart');
-
-        if (hourlyCanvas) {
-            const labels = [
-                {% for hora in pronostico.horas %}
-                    "{% if forloop.first %}Ahora{% else %}{{ hora.hora }}{% endif %}",
-                {% endfor %}
-            ];
-
-            const temperaturas = [
-                {% for hora in pronostico.horas %}
-                    {{ hora.temperatura|unlocalize }},
-                {% endfor %}
-            ];
-
-            new Chart(hourlyCanvas, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Temperatura °C',
-                        data: temperaturas,
-                        borderWidth: 3,
-                        tension: 0.35,
-                        fill: true,
-                        backgroundColor: 'rgba(37, 99, 235, 0.15)',
-                        borderColor: '#2563eb',
-                        pointBackgroundColor: '#1d4ed8',
-                        pointBorderColor: '#ffffff',
-                        pointRadius: 4,
-                        pointHoverRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#1e293b'
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                color: '#475569'
-                            },
-                            grid: {
-                                color: 'rgba(148, 163, 184, 0.15)'
-                            }
-                        },
-                        y: {
-                            ticks: {
-                                color: '#475569'
-                            },
-                            grid: {
-                                color: 'rgba(148, 163, 184, 0.15)'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        const btnC = document.getElementById('btnCelsius');
-        const btnF = document.getElementById('btnFahrenheit');
-
-        function toF(c) { return Math.round((c * 9 / 5 + 32) * 10) / 10; }
-
-        function aplicarUnidad(unidad) {
-            document.querySelectorAll('.temp-val').forEach(el => {
-                const c = parseFloat(el.dataset.celsius);
-                el.textContent = unidad === 'F' ? toF(c) : c;
-            });
-            document.querySelectorAll('.unit-label').forEach(el => {
-                el.textContent = unidad === 'F' ? '°F' : '°C';
-            });
-            if (btnC && btnF) {
-                btnC.classList.toggle('active', unidad === 'C');
-                btnF.classList.toggle('active', unidad === 'F');
             }
-            localStorage.setItem('weatherUnit', unidad);
-        }
+        });
+    }
 
-        if (btnC && btnF) {
-            const savedUnit = localStorage.getItem('weatherUnit') || 'C';
-            aplicarUnidad(savedUnit);
-            btnC.addEventListener('click', () => aplicarUnidad('C'));
-            btnF.addEventListener('click', () => aplicarUnidad('F'));
-        }
+    // Unit toggle
+    const btnC = document.getElementById('btnCelsius');
+    const btnF = document.getElementById('btnFahrenheit');
+    const toF  = c => Math.round((c * 9/5 + 32) * 10) / 10;
 
-        const mapaEl = document.getElementById('mapa-ciudad');
-        if (mapaEl) {
-            {% if clima %}
-            const centroLat = {{ clima.latitud|unlocalize }};
-            const centroLon = {{ clima.longitud|unlocalize }};
-            const zoomInicial = 10;
-            {% else %}
-            const centroLat = -23.4;
-            const centroLon = -58.4;
-            const zoomInicial = 6;
-            {% endif %}
+    function aplicarUnidad(u) {
+        document.querySelectorAll('.temp-val').forEach(el => {
+            const c = parseFloat(el.dataset.celsius);
+            el.textContent = u === 'F' ? toF(c) : c;
+        });
+        document.querySelectorAll('.unit-label').forEach(el => { el.textContent = u === 'F' ? '°F' : '°C'; });
+        if (btnC && btnF) { btnC.classList.toggle('active', u === 'C'); btnF.classList.toggle('active', u === 'F'); }
+        localStorage.setItem('weatherUnit', u);
+    }
 
-            const mapa = L.map('mapa-ciudad', { zoomControl: true }).setView([centroLat, centroLon], zoomInicial);
+    if (btnC && btnF) {
+        aplicarUnidad(localStorage.getItem('weatherUnit') || 'C');
+        btnC.addEventListener('click', () => aplicarUnidad('C'));
+        btnF.addEventListener('click', () => aplicarUnidad('F'));
+    }
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-                maxZoom: 18
-            }).addTo(mapa);
+    // Map
+    const mapaEl = document.getElementById('mapa-ciudad');
+    if (mapaEl) {
+        {% if clima %}const cLat = {{ clima.latitud|unlocalize }}, cLon = {{ clima.longitud|unlocalize }}, cZoom = 10;
+        {% else %}const cLat = -23.4, cLon = -58.4, cZoom = 6;{% endif %}
 
-            const iconoResultado = L.divIcon({
-                html: `<div style="
-                    background: #2563eb;
-                    border: 3px solid white;
-                    border-radius: 50% 50% 50% 0;
-                    transform: rotate(-45deg);
-                    width: 28px;
-                    height: 28px;
-                    box-shadow: 0 4px 12px rgba(37,99,235,0.45);
-                "></div>`,
-                iconSize: [28, 28],
-                iconAnchor: [14, 28],
-                className: ''
-            });
+        const mapa = L.map('mapa-ciudad').setView([cLat, cLon], cZoom);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 18
+        }).addTo(mapa);
 
-            {% if clima %}
-            L.marker([centroLat, centroLon], { icon: iconoResultado })
-                .addTo(mapa)
-                .bindPopup(`<strong>{{ clima.ciudad }}, {{ clima.pais }}</strong><br>{{ clima.temperatura|unlocalize }} °C — {{ clima.descripcion }}`)
-                .openPopup();
-            {% endif %}
+        const mkResult = L.divIcon({
+            html: `<div style="background:#3b82f6;border:3px solid #111827;border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:26px;height:26px;box-shadow:0 4px 14px rgba(59,130,246,0.5);"></div>`,
+            iconSize:[26,26], iconAnchor:[13,26], className:''
+        });
+        const mkClick = L.divIcon({
+            html: `<div style="background:#f59e0b;border:3px solid #111827;border-radius:50%;width:20px;height:20px;box-shadow:0 4px 12px rgba(245,158,11,0.5);"></div>`,
+            iconSize:[20,20], iconAnchor:[10,10], className:''
+        });
 
-            const iconoClick = L.divIcon({
-                html: `<div style="
-                    background: #f59e0b;
-                    border: 3px solid white;
-                    border-radius: 50%;
-                    width: 22px;
-                    height: 22px;
-                    box-shadow: 0 4px 12px rgba(245,158,11,0.5);
-                "></div>`,
-                iconSize: [22, 22],
-                iconAnchor: [11, 11],
-                className: ''
-            });
+        {% if clima %}
+        L.marker([cLat, cLon], { icon: mkResult })
+            .addTo(mapa)
+            .bindPopup(`<div style="font-family:Inter,sans-serif;font-size:13px;"><strong>{{ clima.ciudad }}, {{ clima.pais }}</strong><br>{{ clima.temperatura|unlocalize }} °C — {{ clima.descripcion }}</div>`)
+            .openPopup();
+        {% endif %}
 
-            let markerTemporal = null;
+        let tmpMarker = null;
+        mapa.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(5), lon = e.latlng.lng.toFixed(5);
+            if (tmpMarker) mapa.removeLayer(tmpMarker);
+            tmpMarker = L.marker([lat, lon], { icon: mkClick }).addTo(mapa);
+            tmpMarker.bindPopup(`
+                <div style="font-family:Inter,sans-serif;text-align:center;min-width:170px;">
+                    <div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">📍 ${parseFloat(lat).toFixed(3)}, ${parseFloat(lon).toFixed(3)}</div>
+                    <a href="/?lat=${lat}&lon=${lon}" style="display:inline-block;background:#3b82f6;color:white;padding:8px 18px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;">🌡️ Ver clima aquí</a>
+                </div>`, { offset:[0,-4] }).openPopup();
+        });
+    }
 
-            mapa.on('click', function (e) {
-                const lat = e.latlng.lat.toFixed(5);
-                const lon = e.latlng.lng.toFixed(5);
+    // Date/time & greeting
+    const fechaEl = document.getElementById('fechaHoraActual');
+    const saludoEl = document.getElementById('saludoTop');
+    function actualizarFechaHora() {
+        const now = new Date();
+        const h = now.getHours();
+        if (fechaEl) fechaEl.textContent = now.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' • ' + now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        if (saludoEl) saludoEl.textContent = h >= 5 && h < 12 ? '🌅 Buenos días' : h < 19 ? '☀️ Buenas tardes' : '🌙 Buenas noches';
+    }
+    actualizarFechaHora();
+    setInterval(actualizarFechaHora, 30000);
 
-                if (markerTemporal) {
-                    mapa.removeLayer(markerTemporal);
-                }
+    // Autocomplete
+    const inputCiudad = document.getElementById('id_ciudad');
+    const listaAC = document.getElementById('autocompleteList');
+    let debounce = null, activeIdx = -1;
 
-                markerTemporal = L.marker([lat, lon], { icon: iconoClick }).addTo(mapa);
+    function cerrar() { listaAC.classList.remove('visible'); listaAC.innerHTML = ''; activeIdx = -1; }
+    function marcar(items) { items.forEach((it,i) => it.classList.toggle('active', i === activeIdx)); }
 
-                const popupContent = `
-                    <div style="text-align:center;min-width:180px;">
-                        <div style="font-size:13px;color:#64748b;margin-bottom:8px;">
-                            📍 ${parseFloat(lat).toFixed(3)}, ${parseFloat(lon).toFixed(3)}
-                        </div>
-                        <a href="/?lat=${lat}&lon=${lon}"
-                           style="display:inline-block;background:#2563eb;color:white;padding:9px 18px;
-                                  border-radius:10px;text-decoration:none;font-weight:800;font-size:14px;">
-                            🌡️ Ver clima aquí
-                        </a>
-                    </div>`;
-
-                markerTemporal.bindPopup(popupContent, { offset: [0, -6] }).openPopup();
-            });
-        }
-
-        const fechaHoraEl = document.getElementById('fechaHoraActual');
-        const saludoTopEl = document.getElementById('saludoTop');
-
-        function actualizarFechaHora() {
-            const ahora = new Date();
-
-            const fecha = ahora.toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-
-            const hora = ahora.toLocaleTimeString('es-ES', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-
-            const h = ahora.getHours();
-            let saludo = 'Hola';
-
-            if (h >= 5 && h < 12) {
-                saludo = '🌅 Buenos días';
-            } else if (h >= 12 && h < 19) {
-                saludo = '☀️ Buenas tardes';
-            } else {
-                saludo = '🌙 Buenas noches';
-            }
-
-            if (fechaHoraEl) {
-                fechaHoraEl.textContent = `${fecha} • ${hora}`;
-            }
-
-            if (saludoTopEl) {
-                saludoTopEl.textContent = saludo;
-            }
-        }
-
-        actualizarFechaHora();
-        setInterval(actualizarFechaHora, 1000 * 30);
-
-        const inputCiudad = document.getElementById('id_ciudad');
-        const listaAC = document.getElementById('autocompleteList');
-        let debounceTimer = null;
-        let activeIndex = -1;
-
-        function cerrarLista() {
-            listaAC.classList.remove('visible');
-            listaAC.innerHTML = '';
-            activeIndex = -1;
-        }
-
-        function marcarActivo(items) {
-            items.forEach((item, i) => {
-                item.classList.toggle('active', i === activeIndex);
-            });
-        }
-
-        if (inputCiudad) {
-            inputCiudad.addEventListener('input', function () {
-                clearTimeout(debounceTimer);
-                const query = this.value.trim();
-
-                if (query.length < 2) {
-                    cerrarLista();
-                    return;
-                }
-
-                debounceTimer = setTimeout(() => {
-                    fetch(`/autocomplete/?q=${encodeURIComponent(query)}`)
-                        .then(r => r.json())
-                        .then(sugerencias => {
-                            cerrarLista();
-                            if (!sugerencias.length) return;
-
-                            sugerencias.forEach(s => {
-                                const item = document.createElement('div');
-                                item.className = 'autocomplete-item';
-                                item.textContent = s.etiqueta;
-                                item.addEventListener('mousedown', function (e) {
-                                    e.preventDefault();
-                                    inputCiudad.value = s.nombre;
-                                    cerrarLista();
-                                    document.getElementById('formBusqueda').submit();
-                                });
-                                listaAC.appendChild(item);
+    if (inputCiudad) {
+        inputCiudad.addEventListener('input', function() {
+            clearTimeout(debounce);
+            const q = this.value.trim();
+            if (q.length < 2) { cerrar(); return; }
+            debounce = setTimeout(() => {
+                fetch(`/autocomplete/?q=${encodeURIComponent(q)}`)
+                    .then(r => r.json())
+                    .then(sugs => {
+                        cerrar();
+                        if (!sugs.length) return;
+                        sugs.forEach(s => {
+                            const item = document.createElement('div');
+                            item.className = 'autocomplete-item';
+                            item.textContent = s.etiqueta;
+                            item.addEventListener('mousedown', e => {
+                                e.preventDefault();
+                                inputCiudad.value = s.nombre;
+                                cerrar();
+                                document.getElementById('formBusqueda').submit();
                             });
+                            listaAC.appendChild(item);
+                        });
+                        listaAC.classList.add('visible');
+                        activeIdx = -1;
+                    })
+                    .catch(cerrar);
+            }, 300);
+        });
 
-                            listaAC.classList.add('visible');
-                            activeIndex = -1;
-                        })
-                        .catch(() => cerrarLista());
-                }, 300);
-            });
+        inputCiudad.addEventListener('keydown', function(e) {
+            const items = listaAC.querySelectorAll('.autocomplete-item');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx+1, items.length-1); marcar(items); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx-1, -1); marcar(items); }
+            else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); inputCiudad.value = items[activeIdx].textContent.split(',')[0].trim(); cerrar(); document.getElementById('formBusqueda').submit(); }
+            else if (e.key === 'Escape') cerrar();
+        });
 
-            inputCiudad.addEventListener('keydown', function (e) {
-                const items = listaAC.querySelectorAll('.autocomplete-item');
-                if (!items.length) return;
-
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    activeIndex = Math.min(activeIndex + 1, items.length - 1);
-                    marcarActivo(items);
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    activeIndex = Math.max(activeIndex - 1, -1);
-                    marcarActivo(items);
-                } else if (e.key === 'Enter' && activeIndex >= 0) {
-                    e.preventDefault();
-                    inputCiudad.value = items[activeIndex].textContent.split(',')[0].trim();
-                    cerrarLista();
-                    document.getElementById('formBusqueda').submit();
-                } else if (e.key === 'Escape') {
-                    cerrarLista();
-                }
-            });
-
-            document.addEventListener('click', function (e) {
-                if (!inputCiudad.contains(e.target) && !listaAC.contains(e.target)) {
-                    cerrarLista();
-                }
-            });
-        }
-    });
+        document.addEventListener('click', e => { if (!inputCiudad.contains(e.target) && !listaAC.contains(e.target)) cerrar(); });
+    }
+});
 </script>
 {% endblock %}

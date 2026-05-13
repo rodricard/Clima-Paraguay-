@@ -46,18 +46,14 @@
 
     {% if top_ciudades %}
     <div class="chart-card">
-        <p style="text-align:center;font-weight:800;color:#1e293b;font-size:17px;margin-bottom:16px;">
-            Búsquedas por ciudad
-        </p>
+        <p class="chart-title">Búsquedas por ciudad</p>
         <canvas id="graficoCiudades" height="110"></canvas>
     </div>
     {% endif %}
 
     {% if ultimas_consultas %}
     <div class="chart-card" style="margin-top:20px;">
-        <p style="text-align:center;font-weight:800;color:#1e293b;font-size:17px;margin-bottom:16px;">
-            Evolución de temperatura (últimas consultas)
-        </p>
+        <p class="chart-title">Evolución de temperatura (últimas consultas)</p>
         <canvas id="graficoEvolucion" height="110"></canvas>
     </div>
     {% endif %}
@@ -98,15 +94,15 @@
                 responsive: true,
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: { labels: { color: '#1e293b', font: { weight: '700' } } }
+                    legend: { labels: { color: '#94a3b8', font: { weight: '700' } } }
                 },
                 scales: {
-                    x: { ticks: { color: '#1e293b', font: { weight: '700' } }, grid: { color: 'rgba(148,163,184,0.15)' } },
+                    x: { ticks: { color: '#94a3b8', font: { weight: '700' } }, grid: { color: 'rgba(255,255,255,0.06)' } },
                     yBusquedas: {
                         type: 'linear', position: 'left',
-                        ticks: { color: '#2563eb', font: { weight: '700' } },
-                        grid: { color: 'rgba(148,163,184,0.15)' },
-                        title: { display: true, text: 'Búsquedas', color: '#2563eb', font: { weight: '800' } }
+                        ticks: { color: '#60a5fa', font: { weight: '700' } },
+                        grid: { color: 'rgba(255,255,255,0.06)' },
+                        title: { display: true, text: 'Búsquedas', color: '#60a5fa', font: { weight: '800' } }
                     },
                     yTemp: {
                         type: 'linear', position: 'right',
@@ -141,7 +137,7 @@
             options: {
                 responsive: true,
                 plugins: {
-                    legend: { labels: { color: '#1e293b', font: { weight: '700' } } },
+                    legend: { labels: { color: '#94a3b8', font: { weight: '700' } } },
                     tooltip: {
                         callbacks: {
                             label: ctx => ` ${ctx.parsed.y} °C`
@@ -150,13 +146,13 @@
                 },
                 scales: {
                     x: {
-                        ticks: { color: '#1e293b', font: { weight: '600' }, maxRotation: 35 },
-                        grid: { color: 'rgba(148,163,184,0.15)' }
+                        ticks: { color: '#94a3b8', font: { weight: '600' }, maxRotation: 35 },
+                        grid: { color: 'rgba(255,255,255,0.06)' }
                     },
                     y: {
-                        ticks: { color: '#1e293b', font: { weight: '700' } },
-                        grid: { color: 'rgba(148,163,184,0.15)' },
-                        title: { display: true, text: 'Temperatura °C', color: '#1e293b', font: { weight: '800' } }
+                        ticks: { color: '#94a3b8', font: { weight: '700' } },
+                        grid: { color: 'rgba(255,255,255,0.06)' },
+                        title: { display: true, text: 'Temperatura °C', color: '#94a3b8', font: { weight: '800' } }
                     }
                 }
             }

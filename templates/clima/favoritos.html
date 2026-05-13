@@ -15,8 +15,8 @@
                     <h3>{{ consulta.ciudad }}</h3>
                     <div class="favorite-temp">{{ consulta.temperatura }} °C</div>
                     <p class="favorite-desc">{{ consulta.descripcion }}</p>
-                    <p><strong>País:</strong> {{ consulta.pais }}</p>
-                    <p><strong>Fecha:</strong> {{ consulta.fecha_consulta|date:"d/m/Y H:i" }}</p>
+                    <p style="font-size:13px;color:var(--text-secondary);font-weight:500;margin-bottom:4px;">{{ consulta.pais }}</p>
+                    <p style="font-size:12px;color:var(--text-muted);font-weight:600;">{{ consulta.fecha_consulta|date:"d/m/Y H:i" }}</p>
                 </div>
             {% endfor %}
         </div>
