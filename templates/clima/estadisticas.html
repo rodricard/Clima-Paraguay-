@@ -42,58 +42,125 @@
         </div>
     </div>
 
-    {% if consultas %}
-        <div class="chart-card">
-            <canvas id="graficoTemp"></canvas>
-        </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script>
-            const datos = {
-                labels: [
-                    {% for c in consultas %}
-                        "{{ c.ciudad }}",
-                    {% endfor %}
-                ],
-                datasets: [{
-                    label: 'Temperatura °C',
-                    data: [
-                        {% for c in consultas %}
-                            {{ c.temperatura }},
-                        {% endfor %}
-                    ],
-                    borderWidth: 3,
-                    tension: 0.3,
-                    fill: false
-                }]
-            };
+    {% if top_ciudades %}
+    <div class="chart-card">
+        <p style="text-align:center;font-weight:800;color:#1e293b;font-size:17px;margin-bottom:16px;">
+            Búsquedas por ciudad
+        </p>
+        <canvas id="graficoCiudades" height="110"></canvas>
+    </div>
+    {% endif %}
 
-            new Chart(document.getElementById('graficoTemp'), {
-                type: 'line',
-                data: datos,
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#1e293b'
-                            }
-                        }
+    {% if ultimas_consultas %}
+    <div class="chart-card" style="margin-top:20px;">
+        <p style="text-align:center;font-weight:800;color:#1e293b;font-size:17px;margin-bottom:16px;">
+            Evolución de temperatura (últimas consultas)
+        </p>
+        <canvas id="graficoEvolucion" height="110"></canvas>
+    </div>
+    {% endif %}
+
+    <script>
+        {% if top_ciudades %}
+        new Chart(document.getElementById('graficoCiudades'), {
+            type: 'bar',
+            data: {
+                labels: [{% for c in top_ciudades %}"{{ c.ciudad }}",{% endfor %}],
+                datasets: [
+                    {
+                        label: 'Búsquedas',
+                        data: [{% for c in top_ciudades %}{{ c.total }},{% endfor %}],
+                        backgroundColor: 'rgba(37, 99, 235, 0.80)',
+                        borderRadius: 10,
+                        order: 1,
+                        yAxisID: 'yBusquedas',
                     },
-                    scales: {
-                        x: {
-                            ticks: {
-                                color: '#1e293b'
-                            }
-                        },
-                        y: {
-                            ticks: {
-                                color: '#1e293b'
-                            }
-                        }
+                    {
+                        label: 'Temp. promedio °C',
+                        data: [{% for c in top_ciudades %}{{ c.temp_promedio|floatformat:1 }},{% endfor %}],
+                        type: 'line',
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245,158,11,0.12)',
+                        borderWidth: 3,
+                        tension: 0.35,
+                        pointBackgroundColor: '#f59e0b',
+                        pointBorderColor: '#fff',
+                        pointRadius: 5,
+                        fill: false,
+                        order: 0,
+                        yAxisID: 'yTemp',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { labels: { color: '#1e293b', font: { weight: '700' } } }
+                },
+                scales: {
+                    x: { ticks: { color: '#1e293b', font: { weight: '700' } }, grid: { color: 'rgba(148,163,184,0.15)' } },
+                    yBusquedas: {
+                        type: 'linear', position: 'left',
+                        ticks: { color: '#2563eb', font: { weight: '700' } },
+                        grid: { color: 'rgba(148,163,184,0.15)' },
+                        title: { display: true, text: 'Búsquedas', color: '#2563eb', font: { weight: '800' } }
+                    },
+                    yTemp: {
+                        type: 'linear', position: 'right',
+                        ticks: { color: '#f59e0b', font: { weight: '700' } },
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: '°C', color: '#f59e0b', font: { weight: '800' } }
                     }
                 }
-            });
-        </script>
-    {% endif %}
+            }
+        });
+        {% endif %}
+
+        {% if ultimas_consultas %}
+        new Chart(document.getElementById('graficoEvolucion'), {
+            type: 'line',
+            data: {
+                labels: [{% for c in ultimas_consultas reversed %}"{{ c.ciudad }} {{ c.fecha_consulta|date:'d/m H:i' }}",{% endfor %}],
+                datasets: [{
+                    label: 'Temperatura °C',
+                    data: [{% for c in ultimas_consultas reversed %}{{ c.temperatura }},{% endfor %}],
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37,99,235,0.10)',
+                    borderWidth: 3,
+                    tension: 0.35,
+                    fill: true,
+                    pointBackgroundColor: '#1d4ed8',
+                    pointBorderColor: '#fff',
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#1e293b', font: { weight: '700' } } },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.parsed.y} °C`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#1e293b', font: { weight: '600' }, maxRotation: 35 },
+                        grid: { color: 'rgba(148,163,184,0.15)' }
+                    },
+                    y: {
+                        ticks: { color: '#1e293b', font: { weight: '700' } },
+                        grid: { color: 'rgba(148,163,184,0.15)' },
+                        title: { display: true, text: 'Temperatura °C', color: '#1e293b', font: { weight: '800' } }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    </script>
 {% endblock %}

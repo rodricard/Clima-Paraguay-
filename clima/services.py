@@ -1,10 +1,29 @@
 import requests
 from decouple import config
 from datetime import datetime
+from django.core.cache import cache
 
 API_KEY = config('OPENWEATHER_API_KEY', default='')
 BASE_URL_CURRENT = "https://api.openweathermap.org/data/2.5/weather"
 BASE_URL_FORECAST = "https://api.openweathermap.org/data/2.5/forecast"
+BASE_URL_GEO = "http://api.openweathermap.org/geo/1.0/direct"
+
+ERROR_CIUDAD_NO_ENCONTRADA = 'ciudad_no_encontrada'
+ERROR_API_KEY = 'api_key_invalida'
+ERROR_LIMITE = 'limite_superado'
+ERROR_TIMEOUT = 'tiempo_agotado'
+ERROR_CONEXION = 'sin_conexion'
+ERROR_SERVIDOR = 'error_servidor'
+
+
+def _codigo_error(status_code):
+    if status_code == 404:
+        return ERROR_CIUDAD_NO_ENCONTRADA
+    if status_code == 401:
+        return ERROR_API_KEY
+    if status_code == 429:
+        return ERROR_LIMITE
+    return ERROR_SERVIDOR
 
 
 def _mapear_clima_actual(data):
@@ -33,6 +52,11 @@ def _mapear_clima_actual(data):
 
 
 def obtener_clima(ciudad):
+    cache_key = f"clima_ciudad_{ciudad.lower().strip()}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
     params = {
         'q': ciudad,
         'appid': API_KEY,
@@ -40,15 +64,27 @@ def obtener_clima(ciudad):
         'lang': 'es'
     }
 
-    response = requests.get(BASE_URL_CURRENT, params=params, timeout=10)
+    try:
+        response = requests.get(BASE_URL_CURRENT, params=params, timeout=10)
+    except requests.Timeout:
+        return ERROR_TIMEOUT
+    except requests.ConnectionError:
+        return ERROR_CONEXION
 
     if response.status_code == 200:
-        return _mapear_clima_actual(response.json())
+        resultado = _mapear_clima_actual(response.json())
+        cache.set(cache_key, resultado)
+        return resultado
 
-    return None
+    return _codigo_error(response.status_code)
 
 
 def obtener_clima_por_coordenadas(lat, lon):
+    cache_key = f"clima_coords_{lat}_{lon}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
     params = {
         'lat': lat,
         'lon': lon,
@@ -57,12 +93,19 @@ def obtener_clima_por_coordenadas(lat, lon):
         'lang': 'es'
     }
 
-    response = requests.get(BASE_URL_CURRENT, params=params, timeout=10)
+    try:
+        response = requests.get(BASE_URL_CURRENT, params=params, timeout=10)
+    except requests.Timeout:
+        return ERROR_TIMEOUT
+    except requests.ConnectionError:
+        return ERROR_CONEXION
 
     if response.status_code == 200:
-        return _mapear_clima_actual(response.json())
+        resultado = _mapear_clima_actual(response.json())
+        cache.set(cache_key, resultado)
+        return resultado
 
-    return None
+    return _codigo_error(response.status_code)
 
 
 def _mapear_pronostico(data):
@@ -130,6 +173,11 @@ def _mapear_pronostico(data):
 
 
 def obtener_pronostico(ciudad):
+    cache_key = f"pronostico_ciudad_{ciudad.lower().strip()}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
     params = {
         'q': ciudad,
         'appid': API_KEY,
@@ -137,15 +185,57 @@ def obtener_pronostico(ciudad):
         'lang': 'es'
     }
 
-    response = requests.get(BASE_URL_FORECAST, params=params, timeout=10)
+    try:
+        response = requests.get(BASE_URL_FORECAST, params=params, timeout=10)
+    except (requests.Timeout, requests.ConnectionError):
+        return {'horas': [], 'dias': []}
 
     if response.status_code == 200:
-        return _mapear_pronostico(response.json())
+        resultado = _mapear_pronostico(response.json())
+        cache.set(cache_key, resultado)
+        return resultado
 
     return {'horas': [], 'dias': []}
 
 
+def obtener_sugerencias_ciudades(query):
+    cache_key = f"sugerencias_{query.lower().strip()}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    params = {
+        'q': query,
+        'limit': 5,
+        'appid': API_KEY,
+    }
+
+    try:
+        response = requests.get(BASE_URL_GEO, params=params, timeout=5)
+    except (requests.Timeout, requests.ConnectionError):
+        return []
+
+    if response.status_code != 200:
+        return []
+
+    sugerencias = []
+    for item in response.json():
+        nombre = item.get('name', '')
+        pais = item.get('country', '')
+        estado = item.get('state', '')
+        etiqueta = f"{nombre}, {estado}, {pais}" if estado else f"{nombre}, {pais}"
+        sugerencias.append({'nombre': nombre, 'etiqueta': etiqueta})
+
+    cache.set(cache_key, sugerencias, 300)
+    return sugerencias
+
+
 def obtener_pronostico_por_coordenadas(lat, lon):
+    cache_key = f"pronostico_coords_{lat}_{lon}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
     params = {
         'lat': lat,
         'lon': lon,
@@ -154,9 +244,14 @@ def obtener_pronostico_por_coordenadas(lat, lon):
         'lang': 'es'
     }
 
-    response = requests.get(BASE_URL_FORECAST, params=params, timeout=10)
+    try:
+        response = requests.get(BASE_URL_FORECAST, params=params, timeout=10)
+    except (requests.Timeout, requests.ConnectionError):
+        return {'horas': [], 'dias': []}
 
     if response.status_code == 200:
-        return _mapear_pronostico(response.json())
+        resultado = _mapear_pronostico(response.json())
+        cache.set(cache_key, resultado)
+        return resultado
 
     return {'horas': [], 'dias': []}

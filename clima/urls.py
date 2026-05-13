@@ -7,7 +7,8 @@ from .views import (
     vaciar_historial,
     toggle_favorita,
     favoritos,
-    estadisticas
+    estadisticas,
+    autocomplete_ciudades,
 )
 
 urlpatterns = [
@@ -19,4 +20,5 @@ urlpatterns = [
     path('favorita/<int:consulta_id>/', toggle_favorita, name='toggle_favorita'),
     path('favoritos/', favoritos, name='favoritos'),
     path('estadisticas/', estadisticas, name='estadisticas'),
+    path('autocomplete/', autocomplete_ciudades, name='autocomplete_ciudades'),
 ]

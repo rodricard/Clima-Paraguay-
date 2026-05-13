@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
 from django.db.models import Avg, Count
 from .forms import CiudadForm
 from .services import (
@@ -6,8 +7,28 @@ from .services import (
     obtener_pronostico,
     obtener_clima_por_coordenadas,
     obtener_pronostico_por_coordenadas,
+    obtener_sugerencias_ciudades,
+    ERROR_CIUDAD_NO_ENCONTRADA,
+    ERROR_API_KEY,
+    ERROR_LIMITE,
+    ERROR_TIMEOUT,
+    ERROR_CONEXION,
+    ERROR_SERVIDOR,
 )
 from .models import ConsultaClima
+
+MENSAJES_ERROR = {
+    ERROR_CIUDAD_NO_ENCONTRADA: 'No encontramos esa ciudad. Verificá el nombre e intentá de nuevo.',
+    ERROR_API_KEY: 'La clave de API no es válida. Contactá al administrador.',
+    ERROR_LIMITE: 'Se superó el límite de consultas a la API. Intentá en unos minutos.',
+    ERROR_TIMEOUT: 'La consulta tardó demasiado. Verificá tu conexión e intentá de nuevo.',
+    ERROR_CONEXION: 'No se pudo conectar al servidor de clima. Verificá tu conexión a internet.',
+    ERROR_SERVIDOR: 'El servidor de clima no está disponible en este momento. Intentá más tarde.',
+}
+
+
+def _es_error(resultado):
+    return isinstance(resultado, str)
 
 
 def obtener_fondo_por_clima(descripcion):
@@ -40,7 +61,10 @@ def inicio(request):
     if lat and lon:
         clima = obtener_clima_por_coordenadas(lat, lon)
 
-        if clima:
+        if _es_error(clima):
+            error = MENSAJES_ERROR.get(clima, MENSAJES_ERROR[ERROR_SERVIDOR])
+            clima = None
+        elif clima:
             pronostico = obtener_pronostico_por_coordenadas(lat, lon)
             fondo_clima = obtener_fondo_por_clima(clima['descripcion'])
             origen_geo = True
@@ -64,7 +88,10 @@ def inicio(request):
             ciudad = form.cleaned_data['ciudad'].strip()
             clima = obtener_clima(ciudad)
 
-            if clima:
+            if _es_error(clima):
+                error = MENSAJES_ERROR.get(clima, MENSAJES_ERROR[ERROR_SERVIDOR])
+                clima = None
+            elif clima:
                 pronostico = obtener_pronostico(ciudad)
                 fondo_clima = obtener_fondo_por_clima(clima['descripcion'])
 
@@ -79,7 +106,7 @@ def inicio(request):
                     icono=clima['icono']
                 )
             else:
-                error = "No se encontró la ciudad o hubo un problema con la API."
+                error = MENSAJES_ERROR[ERROR_CIUDAD_NO_ENCONTRADA]
     else:
         form = CiudadForm()
 
@@ -161,11 +188,29 @@ def estadisticas(request):
         .first()
     )
 
+    top_ciudades = (
+        consultas.values('ciudad')
+        .annotate(total=Count('ciudad'), temp_promedio=Avg('temperatura'))
+        .order_by('-total')[:6]
+    )
+
+    ultimas_consultas = list(consultas[:15])
+
     return render(request, 'clima/estadisticas.html', {
         'consultas': consultas[:10],
         'total_consultas': total_consultas,
         'temperatura_promedio': temperatura_promedio,
         'ciudad_mas_buscada': ciudad_mas_buscada,
         'total_favoritas': total_favoritas,
+        'top_ciudades': top_ciudades,
+        'ultimas_consultas': ultimas_consultas,
         'fondo_clima': 'default'
     })
+
+
+def autocomplete_ciudades(request):
+    query = request.GET.get('q', '').strip()
+    if len(query) < 2:
+        return JsonResponse([], safe=False)
+    sugerencias = obtener_sugerencias_ciudades(query)
+    return JsonResponse(sugerencias, safe=False)

@@ -257,6 +257,38 @@
         margin: 10px auto 0 auto;
     }
 
+    .unit-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0;
+        background: rgba(255,255,255,0.18);
+        border: 1px solid rgba(255,255,255,0.28);
+        border-radius: 999px;
+        overflow: hidden;
+        margin-left: 12px;
+        vertical-align: middle;
+    }
+
+    .unit-toggle button {
+        background: none;
+        border: none;
+        color: white;
+        font-weight: 800;
+        font-size: 13px;
+        padding: 7px 14px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .unit-toggle button.active {
+        background: rgba(255,255,255,0.30);
+        border-radius: 999px;
+    }
+
+    .unit-toggle button:hover:not(.active) {
+        background: rgba(255,255,255,0.12);
+    }
+
     .empty-hint {
         max-width: 760px;
         margin: 24px auto 0 auto;
@@ -267,6 +299,52 @@
         background: rgba(255,255,255,0.10);
         border: 1px solid rgba(255,255,255,0.16);
         backdrop-filter: blur(12px);
+    }
+
+    .autocomplete-wrap {
+        position: relative;
+        display: inline-block;
+    }
+
+    .autocomplete-wrap input {
+        width: 380px;
+    }
+
+    .autocomplete-list {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 12px 30px rgba(15,23,42,0.14);
+        z-index: 500;
+        overflow: hidden;
+        display: none;
+    }
+
+    .autocomplete-list.visible {
+        display: block;
+    }
+
+    .autocomplete-item {
+        padding: 12px 16px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--secondary);
+        transition: background 0.18s ease;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+        background: #eff6ff;
+        color: #1d4ed8;
     }
 
     .hourly-chart-card {
@@ -284,6 +362,86 @@
         color: var(--secondary);
         text-align: center;
         margin-bottom: 14px;
+    }
+
+    .map-card {
+        margin-top: 24px;
+        background: rgba(255,255,255,0.97);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        animation: fadeHero 0.7s ease;
+    }
+
+    .map-card-header {
+        padding: 18px 22px 0 22px;
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--secondary);
+        text-align: center;
+        margin-bottom: 14px;
+    }
+
+    #mapa-ciudad {
+        height: 340px;
+        width: 100%;
+        border-radius: 0 0 24px 24px;
+    }
+
+    .alerta-climatica {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 20px;
+        border-radius: 18px;
+        font-weight: 700;
+        font-size: 15px;
+        margin: 12px auto;
+        max-width: 860px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+        animation: fadeHero 0.4s ease;
+        border-left: 5px solid transparent;
+    }
+
+    .alerta-climatica .alerta-icon {
+        font-size: 26px;
+        flex-shrink: 0;
+    }
+
+    .alerta-climatica .alerta-texto strong {
+        display: block;
+        font-size: 16px;
+        margin-bottom: 2px;
+    }
+
+    .alerta-tormenta {
+        background: rgba(30, 27, 75, 0.92);
+        color: #e0e7ff;
+        border-left-color: #6366f1;
+    }
+
+    .alerta-calor {
+        background: rgba(254, 243, 199, 0.97);
+        color: #92400e;
+        border-left-color: #f59e0b;
+    }
+
+    .alerta-frio {
+        background: rgba(219, 234, 254, 0.97);
+        color: #1e3a8a;
+        border-left-color: #3b82f6;
+    }
+
+    .alerta-lluvia {
+        background: rgba(224, 242, 254, 0.97);
+        color: #075985;
+        border-left-color: #0ea5e9;
+    }
+
+    .alerta-viento {
+        background: rgba(240, 253, 244, 0.97);
+        color: #14532d;
+        border-left-color: #22c55e;
     }
 
     @keyframes fadeHero {
@@ -367,9 +525,12 @@
     </div>
 
     <div class="search-shell">
-        <form method="post" class="search-form">
+        <form method="post" class="search-form" id="formBusqueda">
             {% csrf_token %}
-            {{ form.ciudad }}
+            <div class="autocomplete-wrap">
+                {{ form.ciudad }}
+                <div class="autocomplete-list" id="autocompleteList"></div>
+            </div>
             <button type="submit" class="btn btn-primary">🔎 Buscar clima</button>
         </form>
 
@@ -394,18 +555,73 @@
 {% endif %}
 
 {% if clima %}
+
+    {% if 'torment' in clima.descripcion|lower %}
+        <div class="alerta-climatica alerta-tormenta">
+            <div class="alerta-icon">⛈️</div>
+            <div class="alerta-texto">
+                <strong>Alerta de tormenta</strong>
+                Se detectaron condiciones de tormenta en {{ clima.ciudad }}. Evitá salir al exterior si es posible.
+            </div>
+        </div>
+    {% endif %}
+
+    {% if clima.temperatura > 38 %}
+        <div class="alerta-climatica alerta-calor">
+            <div class="alerta-icon">🌡️</div>
+            <div class="alerta-texto">
+                <strong>Alerta de calor extremo</strong>
+                La temperatura en {{ clima.ciudad }} supera los 38 °C. Mantenete hidratado y evitá la exposición solar directa.
+            </div>
+        </div>
+    {% endif %}
+
+    {% if clima.temperatura < 0 %}
+        <div class="alerta-climatica alerta-frio">
+            <div class="alerta-icon">🥶</div>
+            <div class="alerta-texto">
+                <strong>Alerta de frío extremo</strong>
+                La temperatura en {{ clima.ciudad }} está bajo cero. Abrigate bien y prestá atención a superficies heladas.
+            </div>
+        </div>
+    {% endif %}
+
+    {% if 'lluvia intensa' in clima.descripcion|lower or 'fuertes lluvias' in clima.descripcion|lower or 'lluvia moderada' in clima.descripcion|lower %}
+        <div class="alerta-climatica alerta-lluvia">
+            <div class="alerta-icon">🌧️</div>
+            <div class="alerta-texto">
+                <strong>Alerta de lluvia intensa</strong>
+                Se registra {{ clima.descripcion }} en {{ clima.ciudad }}. Llevá paraguas y manejá con precaución.
+            </div>
+        </div>
+    {% endif %}
+
+    {% if clima.viento_velocidad > 15 %}
+        <div class="alerta-climatica alerta-viento">
+            <div class="alerta-icon">💨</div>
+            <div class="alerta-texto">
+                <strong>Alerta de vientos fuertes</strong>
+                Vientos de {{ clima.viento_velocidad }} m/s en {{ clima.ciudad }}. Tomá precauciones en espacios abiertos.
+            </div>
+        </div>
+    {% endif %}
+
     <div class="weather-card">
         <div class="weather-left">
             <div class="city-line">
                 <h2>{{ clima.ciudad }}, {{ clima.pais }}</h2>
                 <span class="city-chip">Ubicación consultada</span>
                 <span class="desc-chip">{{ clima.descripcion }}</span>
+                <div class="unit-toggle">
+                    <button id="btnCelsius" class="active" type="button">°C</button>
+                    <button id="btnFahrenheit" type="button">°F</button>
+                </div>
             </div>
 
             <div class="temp-row">
-                <div class="temp">{{ clima.temperatura }} °C</div>
+                <div class="temp"><span class="temp-val" data-celsius="{{ clima.temperatura|unlocalize }}">{{ clima.temperatura }}</span> <span class="unit-label">°C</span></div>
                 <div class="temp-extra">
-                    Sensación térmica de {{ clima.sensacion_termica }} °C
+                    Sensación térmica de <span class="temp-val" data-celsius="{{ clima.sensacion_termica|unlocalize }}">{{ clima.sensacion_termica }}</span> <span class="unit-label">°C</span>
                 </div>
             </div>
 
@@ -414,7 +630,7 @@
             <div class="mini-grid">
                 <div class="mini-box">
                     <span class="label">Sensación térmica</span>
-                    <span class="value">{{ clima.sensacion_termica }} °C</span>
+                    <span class="value"><span class="temp-val" data-celsius="{{ clima.sensacion_termica|unlocalize }}">{{ clima.sensacion_termica }}</span> <span class="unit-label">°C</span></span>
                 </div>
                 <div class="mini-box">
                     <span class="label">Humedad</span>
@@ -422,11 +638,11 @@
                 </div>
                 <div class="mini-box">
                     <span class="label">Temp. mínima</span>
-                    <span class="value">{{ clima.temp_min }} °C</span>
+                    <span class="value"><span class="temp-val" data-celsius="{{ clima.temp_min|unlocalize }}">{{ clima.temp_min }}</span> <span class="unit-label">°C</span></span>
                 </div>
                 <div class="mini-box">
                     <span class="label">Temp. máxima</span>
-                    <span class="value">{{ clima.temp_max }} °C</span>
+                    <span class="value"><span class="temp-val" data-celsius="{{ clima.temp_max|unlocalize }}">{{ clima.temp_max }}</span> <span class="unit-label">°C</span></span>
                 </div>
                 <div class="mini-box">
                     <span class="label">Viento</span>
@@ -493,7 +709,7 @@
                             </div>
                             <div class="hourly-date">{{ hora.fecha }}</div>
                             <img src="https://openweathermap.org/img/wn/{{ hora.icono }}@2x.png" alt="Icono">
-                            <div class="hourly-temp">{{ hora.temperatura }} °C</div>
+                            <div class="hourly-temp"><span class="temp-val" data-celsius="{{ hora.temperatura|unlocalize }}">{{ hora.temperatura }}</span> <span class="unit-label">°C</span></div>
                             <div class="hourly-desc">{{ hora.descripcion }}</div>
                         </div>
                     {% endfor %}
@@ -526,8 +742,8 @@
                         <img src="https://openweathermap.org/img/wn/{{ dia.icono }}@2x.png" alt="Icono">
 
                         <div class="temp-range">
-                            <div class="temp-max">{{ dia.temp_max }} °C</div>
-                            <div class="temp-min">Min: {{ dia.temp_min }} °C</div>
+                            <div class="temp-max"><span class="temp-val" data-celsius="{{ dia.temp_max|unlocalize }}">{{ dia.temp_max }}</span> <span class="unit-label">°C</span></div>
+                            <div class="temp-min">Min: <span class="temp-val" data-celsius="{{ dia.temp_min|unlocalize }}">{{ dia.temp_min }}</span> <span class="unit-label">°C</span></div>
                         </div>
 
                         <div class="forecast-desc">{{ dia.descripcion }}</div>
@@ -539,10 +755,22 @@
 {% else %}
     <div class="empty-hint">
         <strong>Empieza buscando una ciudad.</strong><br>
-        Verás el clima actual, indicadores detallados, pronóstico por horas, próximos días y podrás usar tu ubicación automática.
+        También podés hacer click en cualquier punto del mapa para ver el clima de ese lugar.
     </div>
 {% endif %}
 
+<div class="map-card">
+    <div class="map-card-header">
+        🗺️ Explorar en el mapa
+        <span style="display:block;font-size:13px;font-weight:600;color:var(--muted);margin-top:4px;">
+            Hacé click en cualquier punto para consultar el clima de esa ubicación
+        </span>
+    </div>
+    <div id="mapa-ciudad"></div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -640,6 +868,116 @@
             });
         }
 
+        const btnC = document.getElementById('btnCelsius');
+        const btnF = document.getElementById('btnFahrenheit');
+
+        function toF(c) { return Math.round((c * 9 / 5 + 32) * 10) / 10; }
+
+        function aplicarUnidad(unidad) {
+            document.querySelectorAll('.temp-val').forEach(el => {
+                const c = parseFloat(el.dataset.celsius);
+                el.textContent = unidad === 'F' ? toF(c) : c;
+            });
+            document.querySelectorAll('.unit-label').forEach(el => {
+                el.textContent = unidad === 'F' ? '°F' : '°C';
+            });
+            if (btnC && btnF) {
+                btnC.classList.toggle('active', unidad === 'C');
+                btnF.classList.toggle('active', unidad === 'F');
+            }
+            localStorage.setItem('weatherUnit', unidad);
+        }
+
+        if (btnC && btnF) {
+            const savedUnit = localStorage.getItem('weatherUnit') || 'C';
+            aplicarUnidad(savedUnit);
+            btnC.addEventListener('click', () => aplicarUnidad('C'));
+            btnF.addEventListener('click', () => aplicarUnidad('F'));
+        }
+
+        const mapaEl = document.getElementById('mapa-ciudad');
+        if (mapaEl) {
+            {% if clima %}
+            const centroLat = {{ clima.latitud|unlocalize }};
+            const centroLon = {{ clima.longitud|unlocalize }};
+            const zoomInicial = 10;
+            {% else %}
+            const centroLat = -23.4;
+            const centroLon = -58.4;
+            const zoomInicial = 6;
+            {% endif %}
+
+            const mapa = L.map('mapa-ciudad', { zoomControl: true }).setView([centroLat, centroLon], zoomInicial);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                maxZoom: 18
+            }).addTo(mapa);
+
+            const iconoResultado = L.divIcon({
+                html: `<div style="
+                    background: #2563eb;
+                    border: 3px solid white;
+                    border-radius: 50% 50% 50% 0;
+                    transform: rotate(-45deg);
+                    width: 28px;
+                    height: 28px;
+                    box-shadow: 0 4px 12px rgba(37,99,235,0.45);
+                "></div>`,
+                iconSize: [28, 28],
+                iconAnchor: [14, 28],
+                className: ''
+            });
+
+            {% if clima %}
+            L.marker([centroLat, centroLon], { icon: iconoResultado })
+                .addTo(mapa)
+                .bindPopup(`<strong>{{ clima.ciudad }}, {{ clima.pais }}</strong><br>{{ clima.temperatura|unlocalize }} °C — {{ clima.descripcion }}`)
+                .openPopup();
+            {% endif %}
+
+            const iconoClick = L.divIcon({
+                html: `<div style="
+                    background: #f59e0b;
+                    border: 3px solid white;
+                    border-radius: 50%;
+                    width: 22px;
+                    height: 22px;
+                    box-shadow: 0 4px 12px rgba(245,158,11,0.5);
+                "></div>`,
+                iconSize: [22, 22],
+                iconAnchor: [11, 11],
+                className: ''
+            });
+
+            let markerTemporal = null;
+
+            mapa.on('click', function (e) {
+                const lat = e.latlng.lat.toFixed(5);
+                const lon = e.latlng.lng.toFixed(5);
+
+                if (markerTemporal) {
+                    mapa.removeLayer(markerTemporal);
+                }
+
+                markerTemporal = L.marker([lat, lon], { icon: iconoClick }).addTo(mapa);
+
+                const popupContent = `
+                    <div style="text-align:center;min-width:180px;">
+                        <div style="font-size:13px;color:#64748b;margin-bottom:8px;">
+                            📍 ${parseFloat(lat).toFixed(3)}, ${parseFloat(lon).toFixed(3)}
+                        </div>
+                        <a href="/?lat=${lat}&lon=${lon}"
+                           style="display:inline-block;background:#2563eb;color:white;padding:9px 18px;
+                                  border-radius:10px;text-decoration:none;font-weight:800;font-size:14px;">
+                            🌡️ Ver clima aquí
+                        </a>
+                    </div>`;
+
+                markerTemporal.bindPopup(popupContent, { offset: [0, -6] }).openPopup();
+            });
+        }
+
         const fechaHoraEl = document.getElementById('fechaHoraActual');
         const saludoTopEl = document.getElementById('saludoTop');
 
@@ -679,6 +1017,89 @@
 
         actualizarFechaHora();
         setInterval(actualizarFechaHora, 1000 * 30);
+
+        const inputCiudad = document.getElementById('id_ciudad');
+        const listaAC = document.getElementById('autocompleteList');
+        let debounceTimer = null;
+        let activeIndex = -1;
+
+        function cerrarLista() {
+            listaAC.classList.remove('visible');
+            listaAC.innerHTML = '';
+            activeIndex = -1;
+        }
+
+        function marcarActivo(items) {
+            items.forEach((item, i) => {
+                item.classList.toggle('active', i === activeIndex);
+            });
+        }
+
+        if (inputCiudad) {
+            inputCiudad.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                const query = this.value.trim();
+
+                if (query.length < 2) {
+                    cerrarLista();
+                    return;
+                }
+
+                debounceTimer = setTimeout(() => {
+                    fetch(`/autocomplete/?q=${encodeURIComponent(query)}`)
+                        .then(r => r.json())
+                        .then(sugerencias => {
+                            cerrarLista();
+                            if (!sugerencias.length) return;
+
+                            sugerencias.forEach(s => {
+                                const item = document.createElement('div');
+                                item.className = 'autocomplete-item';
+                                item.textContent = s.etiqueta;
+                                item.addEventListener('mousedown', function (e) {
+                                    e.preventDefault();
+                                    inputCiudad.value = s.nombre;
+                                    cerrarLista();
+                                    document.getElementById('formBusqueda').submit();
+                                });
+                                listaAC.appendChild(item);
+                            });
+
+                            listaAC.classList.add('visible');
+                            activeIndex = -1;
+                        })
+                        .catch(() => cerrarLista());
+                }, 300);
+            });
+
+            inputCiudad.addEventListener('keydown', function (e) {
+                const items = listaAC.querySelectorAll('.autocomplete-item');
+                if (!items.length) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                    marcarActivo(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeIndex = Math.max(activeIndex - 1, -1);
+                    marcarActivo(items);
+                } else if (e.key === 'Enter' && activeIndex >= 0) {
+                    e.preventDefault();
+                    inputCiudad.value = items[activeIndex].textContent.split(',')[0].trim();
+                    cerrarLista();
+                    document.getElementById('formBusqueda').submit();
+                } else if (e.key === 'Escape') {
+                    cerrarLista();
+                }
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!inputCiudad.contains(e.target) && !listaAC.contains(e.target)) {
+                    cerrarLista();
+                }
+            });
+        }
     });
 </script>
 {% endblock %}
