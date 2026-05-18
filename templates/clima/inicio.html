@@ -326,6 +326,115 @@
         .env-grid { grid-template-columns: 1fr; }
     }
 
+    /* Recent city chips */
+    .recent-chips {
+        display: none; gap: 8px; flex-wrap: wrap;
+        margin-bottom: 14px;
+    }
+    .recent-chip {
+        background: var(--bg-card);
+        border: 1px solid var(--border-bright);
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 12px; font-weight: 700;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: 'Inter', sans-serif;
+    }
+    .recent-chip:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--accent); }
+    .recent-label {
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.5px; color: var(--text-muted);
+        margin-bottom: 8px; display: none;
+    }
+
+    /* Extras row (compass + sun arc) */
+    .extras-row {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 14px; margin-top: 24px;
+    }
+    .extra-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 22px 24px;
+        animation: fadeUp 0.4s ease;
+        display: flex; flex-direction: column; align-items: center;
+        gap: 10px;
+    }
+    .extra-card-header {
+        font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.6px;
+        color: var(--text-muted); align-self: flex-start;
+    }
+
+    /* Compass */
+    .compass-arrow-group {
+        transform-box: fill-box;
+        transform-origin: center;
+        transform: rotate(0deg);
+        transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .wind-speed-big {
+        font-size: 28px; font-weight: 900;
+        color: var(--text-primary); letter-spacing: -1px;
+    }
+    .wind-dir-text {
+        font-size: 13px; font-weight: 700; color: var(--text-muted);
+    }
+
+    /* Sun arc */
+    .sun-arc-wrap { width: 100%; }
+    .sun-hours {
+        font-size: 13px; font-weight: 700; color: var(--text-secondary);
+    }
+    .sun-time-row {
+        display: flex; justify-content: space-between;
+        width: 100%; font-size: 12px; font-weight: 700; color: var(--text-muted);
+        padding: 0 4px;
+    }
+
+    /* Map layer controls */
+    .map-layers {
+        display: flex; gap: 6px; flex-wrap: wrap;
+        padding: 12px 16px 10px;
+        align-items: center;
+    }
+    .layer-btn {
+        padding: 6px 14px; border-radius: 999px;
+        font-size: 12px; font-weight: 700;
+        border: 1px solid var(--border-bright);
+        background: var(--bg-elevated);
+        color: var(--text-muted);
+        cursor: pointer; font-family: 'Inter', sans-serif;
+        transition: all 0.2s ease;
+    }
+    .layer-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+    .layer-btn.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+
+    /* Map legend */
+    .map-legend {
+        display: none;
+        padding: 10px 18px 14px;
+        border-top: 1px solid var(--border-soft);
+        animation: fadeUp 0.25s ease;
+    }
+    .legend-header {
+        font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.5px;
+        color: var(--text-muted); margin-bottom: 8px;
+    }
+    .legend-bar {
+        height: 10px; border-radius: 999px;
+        width: 100%;
+    }
+    .legend-labels {
+        display: flex; justify-content: space-between;
+        font-size: 10px; font-weight: 700;
+        color: var(--text-muted); margin-top: 5px;
+    }
+
     /* Empty hint */
     .empty-hint {
         text-align: center;
@@ -344,6 +453,8 @@
         .search-row { flex-direction: column; }
         .search-row .autocomplete-wrap { width: 100%; }
         .temp { font-size: 52px; }
+        .extras-row { grid-template-columns: 1fr; }
+        .env-grid { grid-template-columns: 1fr; }
     }
 </style>
 
@@ -365,6 +476,8 @@
     </div>
 
     <div class="search-shell">
+        <div class="recent-label" id="recentLabel">Recientes</div>
+        <div class="recent-chips" id="recentChips"></div>
         <form method="post" class="search-row" id="formBusqueda">
             {% csrf_token %}
             <div class="autocomplete-wrap">
@@ -473,6 +586,57 @@
         </div>
     </div>
 
+    <!-- Compass + Sun Arc -->
+    <div class="extras-row">
+        <div class="extra-card">
+            <div class="extra-card-header">💨 Viento</div>
+            <svg viewBox="0 0 100 100" width="130" height="130">
+                <circle cx="50" cy="50" r="46" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.10)" stroke-width="1.5"/>
+                <line x1="50" y1="6" x2="50" y2="13" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" transform="rotate(45 50 50)"/>
+                <line x1="50" y1="6" x2="50" y2="13" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" transform="rotate(90 50 50)"/>
+                <line x1="50" y1="6" x2="50" y2="13" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" transform="rotate(135 50 50)"/>
+                <line x1="50" y1="6" x2="50" y2="13" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" transform="rotate(180 50 50)"/>
+                <line x1="50" y1="6" x2="50" y2="13" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" transform="rotate(225 50 50)"/>
+                <line x1="50" y1="6" x2="50" y2="13" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" transform="rotate(270 50 50)"/>
+                <line x1="50" y1="6" x2="50" y2="13" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" transform="rotate(315 50 50)"/>
+                <text x="50" y="11"  text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="700" font-family="Inter,sans-serif">N</text>
+                <text x="90" y="54"  text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="700" font-family="Inter,sans-serif">E</text>
+                <text x="50" y="96"  text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="700" font-family="Inter,sans-serif">S</text>
+                <text x="10" y="54"  text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="700" font-family="Inter,sans-serif">O</text>
+                <g class="compass-arrow-group" id="compassArrow">
+                    <polygon points="50,18 46.5,50 53.5,50" fill="#3b82f6" opacity="0.95"/>
+                    <polygon points="50,82 46.5,50 53.5,50" fill="rgba(255,255,255,0.20)"/>
+                </g>
+                <circle cx="50" cy="50" r="4" fill="#0d1424"/>
+                <circle cx="50" cy="50" r="2.5" fill="#60a5fa"/>
+            </svg>
+            <div class="wind-speed-big">{{ clima.viento_velocidad }} m/s</div>
+            <div class="wind-dir-text" id="windDirLabel">—</div>
+        </div>
+
+        <div class="extra-card">
+            <div class="extra-card-header">🌅 Luz del día</div>
+            <div class="sun-arc-wrap">
+                <svg id="sunArcSvg" viewBox="0 0 200 115" width="100%" style="overflow:visible;">
+                    <defs>
+                        <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.3"/>
+                            <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:1"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M 18 105 A 82 82 0 0 1 182 105" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="3" stroke-linecap="round"/>
+                    <path id="sunArcActive" d="M 18 105 A 82 82 0 0 1 182 105" fill="none" stroke="url(#sunGrad)" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 258"/>
+                    <circle id="sunDot" cx="18" cy="105" r="7" fill="#f59e0b" style="filter:drop-shadow(0 0 8px #f59e0b88);"/>
+                </svg>
+                <div class="sun-time-row">
+                    <span>🌄 {{ clima.amanecer }}</span>
+                    <span>🌇 {{ clima.atardecer }}</span>
+                </div>
+            </div>
+            <div class="sun-hours" id="horasLuz">—</div>
+        </div>
+    </div>
+
     {% if pronostico.horas %}
     <div class="forecast-section">
         <h3 class="section-title">Próximas horas</h3>
@@ -560,7 +724,7 @@
                 Riesgo {{ uv.riesgo }}
             </div>
             <div class="uv-bar-wrap">
-                <div class="uv-bar" style="width: {{ uv.valor|floatformat:0 }}0%;"></div>
+                <div class="uv-bar" style="width: {{ uv.percent }}%;"></div>
             </div>
             <div class="uv-scale">
                 <span>Bajo</span><span>Mod.</span><span>Alto</span><span>Muy alto</span><span>Extremo</span>
@@ -583,6 +747,18 @@
     <div class="map-card-header">
         🗺️ Explorar en el mapa
         <div class="map-subtitle">Hacé click en cualquier punto para consultar el clima de esa ubicación</div>
+    </div>
+    <div class="map-layers">
+        <button class="layer-btn active" data-layer="">Sin capa</button>
+        <button class="layer-btn" data-layer="clouds_new">☁️ Nubes</button>
+        <button class="layer-btn" data-layer="precipitation_new">🌧️ Lluvia</button>
+        <button class="layer-btn" data-layer="wind_new">💨 Viento</button>
+        <button class="layer-btn" data-layer="temp_new">🌡️ Temperatura</button>
+    </div>
+    <div class="map-legend" id="mapLegend">
+        <div class="legend-header" id="legendTitle"></div>
+        <div class="legend-bar" id="legendBar"></div>
+        <div class="legend-labels" id="legendLabels"></div>
     </div>
     <div id="mapSkeleton" class="map-skeleton">
         <div class="map-skeleton-icon">🗺️</div>
@@ -667,6 +843,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Map
+    let mapa = null;
     const mapaEl = document.getElementById('mapa-ciudad');
     if (mapaEl) {
         {% if clima %}const cLat = {{ clima.latitud|unlocalize }}, cLon = {{ clima.longitud|unlocalize }}, cZoom = 10;
@@ -676,7 +853,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const skeleton = document.getElementById('mapSkeleton');
         mapaDiv.style.display = 'block';
 
-        const mapa = L.map('mapa-ciudad').setView([cLat, cLon], cZoom);
+        mapa = L.map('mapa-ciudad').setView([cLat, cLon], cZoom);
         const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             maxZoom: 18
@@ -717,6 +894,137 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>`, { offset:[0,-4] }).openPopup();
         });
     }
+
+    // Recent cities chips
+    const recentKey = 'recentCities';
+    {% if clima %}
+    (function() {
+        const city = '{{ clima.ciudad }}';
+        const arr = JSON.parse(localStorage.getItem(recentKey) || '[]');
+        const filtered = arr.filter(c => c.toLowerCase() !== city.toLowerCase());
+        filtered.unshift(city);
+        localStorage.setItem(recentKey, JSON.stringify(filtered.slice(0, 5)));
+    })();
+    {% endif %}
+    (function() {
+        const cities = JSON.parse(localStorage.getItem(recentKey) || '[]');
+        const container = document.getElementById('recentChips');
+        const label = document.getElementById('recentLabel');
+        if (!container || cities.length === 0) return;
+        cities.forEach(city => {
+            const btn = document.createElement('button');
+            btn.type = 'button'; btn.className = 'recent-chip';
+            btn.textContent = city;
+            btn.addEventListener('click', () => {
+                document.getElementById('id_ciudad').value = city;
+                document.getElementById('formBusqueda').submit();
+            });
+            container.appendChild(btn);
+        });
+        container.style.display = 'flex';
+        if (label) label.style.display = 'block';
+    })();
+
+    // Wind compass
+    {% if clima %}
+    (function() {
+        const deg = {{ clima.viento_direccion|unlocalize }};
+        setTimeout(() => {
+            const arrow = document.getElementById('compassArrow');
+            if (arrow) arrow.style.transform = `rotate(${deg}deg)`;
+        }, 300);
+        const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'];
+        const label = document.getElementById('windDirLabel');
+        if (label) label.textContent = `desde el ${dirs[Math.round(deg / 22.5) % 16]}`;
+    })();
+
+    // Sun arc
+    (function() {
+        function toMins(s) { const [h,m] = s.split(':').map(Number); return h*60+m; }
+        const dawn = toMins('{{ clima.amanecer }}');
+        const dusk = toMins('{{ clima.atardecer }}');
+        const now = new Date();
+        const cur = now.getHours()*60 + now.getMinutes();
+        const p = Math.max(0, Math.min(1, (cur - dawn) / (dusk - dawn)));
+        const r = 82, cx = 100, cy = 105;
+        const theta = p * Math.PI;
+        const sx = cx - r * Math.cos(theta);
+        const sy = cy - r * Math.sin(theta);
+        const dot = document.getElementById('sunDot');
+        const arcActive = document.getElementById('sunArcActive');
+        if (dot) { dot.setAttribute('cx', sx.toFixed(1)); dot.setAttribute('cy', sy.toFixed(1)); }
+        if (arcActive) {
+            const len = Math.PI * r;
+            arcActive.setAttribute('stroke-dasharray', `${(p*len).toFixed(1)} ${len.toFixed(1)}`);
+        }
+        const horasEl = document.getElementById('horasLuz');
+        if (horasEl) {
+            const h = ((dusk - dawn) / 60).toFixed(1);
+            horasEl.textContent = `${h} horas de luz hoy`;
+        }
+    })();
+    {% endif %}
+
+    // Radar layers
+    const OW_KEY = "{{ ow_api_key }}";
+    let activeWeatherLayer = null;
+
+    const LAYER_META = {
+        'clouds_new': {
+            title: 'Cobertura de nubes',
+            gradient: 'linear-gradient(to right, rgba(148,163,184,0.15), #94a3b8, #64748b, #334155)',
+            labels: ['0%', '25%', '50%', '75%', '100%']
+        },
+        'precipitation_new': {
+            title: 'Precipitación (mm/h)',
+            gradient: 'linear-gradient(to right, rgba(96,165,250,0.2), #60a5fa, #22c55e, #f59e0b, #ef4444)',
+            labels: ['0', '0.5', '2', '10', '20+']
+        },
+        'wind_new': {
+            title: 'Velocidad del viento (m/s)',
+            gradient: 'linear-gradient(to right, rgba(34,197,94,0.2), #22c55e, #60a5fa, #f59e0b, #ef4444)',
+            labels: ['0', '5', '15', '25', '40+']
+        },
+        'temp_new': {
+            title: 'Temperatura superficial',
+            gradient: 'linear-gradient(to right, #1e3a8a, #3b82f6, #06b6d4, #22c55e, #f59e0b, #ef4444)',
+            labels: ['-40°C', '-10°C', '0°C', '15°C', '30°C', '40°C+']
+        }
+    };
+
+    function updateLegend(layer) {
+        const legend = document.getElementById('mapLegend');
+        const title = document.getElementById('legendTitle');
+        const bar = document.getElementById('legendBar');
+        const labels = document.getElementById('legendLabels');
+        if (!legend) return;
+        if (!layer) { legend.style.display = 'none'; return; }
+        const meta = LAYER_META[layer];
+        if (!meta) { legend.style.display = 'none'; return; }
+        title.textContent = meta.title;
+        bar.style.background = meta.gradient;
+        labels.innerHTML = meta.labels.map(l => `<span>${l}</span>`).join('');
+        legend.style.display = 'block';
+    }
+
+    document.querySelectorAll('.layer-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            if (activeWeatherLayer && mapaEl) {
+                try { mapa.removeLayer(activeWeatherLayer); } catch(e) {}
+                activeWeatherLayer = null;
+            }
+            const layer = this.dataset.layer;
+            if (layer && mapaEl) {
+                activeWeatherLayer = L.tileLayer(
+                    `https://tile.openweathermap.org/map/${layer}/{z}/{x}/{y}.png?appid=${OW_KEY}`,
+                    { opacity: 0.85, zIndex: 1000 }
+                ).addTo(mapa);
+            }
+            updateLegend(layer);
+        });
+    });
 
     // Date/time & greeting
     const fechaEl = document.getElementById('fechaHoraActual');
