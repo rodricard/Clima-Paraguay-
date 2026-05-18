@@ -9,6 +9,7 @@ from .views import (
     favoritos,
     estadisticas,
     autocomplete_ciudades,
+    comparar,
 )
 
 urlpatterns = [
@@ -21,4 +22,5 @@ urlpatterns = [
     path('favoritos/', favoritos, name='favoritos'),
     path('estadisticas/', estadisticas, name='estadisticas'),
     path('autocomplete/', autocomplete_ciudades, name='autocomplete_ciudades'),
+    path('comparar/', comparar, name='comparar'),
 ]

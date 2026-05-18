@@ -1,0 +1,292 @@
+{% extends 'clima/base.html' %}
+{% load l10n %}
+
+{% block title %}Comparar | Clima Paraguay{% endblock %}
+
+{% block content %}
+<style>
+    .compare-form-wrap {
+        max-width: 700px; margin: 0 auto 32px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-bright);
+        border-radius: var(--radius);
+        padding: 24px 28px;
+    }
+
+    .compare-inputs {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 14px; align-items: center;
+    }
+
+    .compare-input {
+        width: 100%; padding: 12px 16px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-bright);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+        font-size: 15px; font-weight: 600;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .compare-input::placeholder { color: var(--text-muted); }
+    .compare-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .compare-vs {
+        font-size: 14px; font-weight: 900;
+        color: var(--text-muted);
+        letter-spacing: 1px;
+        text-align: center;
+        padding: 0 4px;
+    }
+
+    .compare-submit {
+        text-align: center; margin-top: 16px;
+    }
+
+    .compare-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+
+    .compare-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 28px;
+        animation: fadeUp 0.4s ease;
+        position: relative; overflow: hidden;
+    }
+    .compare-card::before {
+        content: "";
+        position: absolute; top: -50px; right: -50px;
+        width: 160px; height: 160px; border-radius: 50%;
+        background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+        pointer-events: none;
+    }
+
+    .compare-city-name {
+        font-size: 22px; font-weight: 900;
+        color: var(--text-primary); letter-spacing: -0.3px;
+        margin-bottom: 4px;
+    }
+
+    .compare-country {
+        font-size: 13px; font-weight: 600;
+        color: var(--text-muted); margin-bottom: 20px;
+    }
+
+    .compare-temp-row {
+        display: flex; align-items: flex-end;
+        gap: 12px; margin-bottom: 6px;
+    }
+
+    .compare-temp {
+        font-size: 64px; font-weight: 900;
+        color: var(--text-primary); letter-spacing: -3px;
+        line-height: 1;
+    }
+
+    .compare-icon {
+        width: 80px; height: 80px;
+        filter: drop-shadow(0 6px 16px rgba(59,130,246,0.25));
+        animation: floatIcon 3.5s ease-in-out infinite;
+    }
+
+    .compare-desc {
+        font-size: 14px; font-weight: 600;
+        color: var(--text-secondary); text-transform: capitalize;
+        margin-bottom: 20px;
+    }
+
+    .compare-metrics {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .compare-metric {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 12px;
+    }
+    .compare-metric .lbl {
+        font-size: 10px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.5px;
+        color: var(--text-muted); margin-bottom: 4px;
+    }
+    .compare-metric .val {
+        font-size: 16px; font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    .compare-winner {
+        position: absolute; top: 14px; right: 14px;
+        background: rgba(34,197,94,0.15);
+        color: #86efac;
+        border: 1px solid rgba(34,197,94,0.25);
+        padding: 4px 12px; border-radius: 999px;
+        font-size: 11px; font-weight: 800;
+    }
+
+    .compare-empty-card {
+        background: var(--bg-elevated);
+        border: 1px dashed var(--border-bright);
+        border-radius: var(--radius);
+        padding: 48px 24px;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 15px; font-weight: 600;
+    }
+
+    .compare-chart-wrap {
+        margin-top: 28px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        animation: fadeUp 0.45s ease;
+    }
+
+    .compare-chart-title {
+        font-size: 15px; font-weight: 800;
+        color: var(--text-primary); margin-bottom: 16px;
+        letter-spacing: -0.2px;
+    }
+
+    @media (max-width: 768px) {
+        .compare-inputs { grid-template-columns: 1fr; }
+        .compare-vs { display: none; }
+        .compare-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<h1 class="page-title">Comparar ciudades</h1>
+<p class="page-subtitle">Elegí dos ciudades para ver su clima lado a lado en tiempo real.</p>
+
+<div class="compare-form-wrap">
+    <form method="get">
+        <div class="compare-inputs">
+            <input type="text" name="ciudad1" value="{{ ciudad1 }}" placeholder="Primera ciudad..." class="compare-input">
+            <div class="compare-vs">VS</div>
+            <input type="text" name="ciudad2" value="{{ ciudad2 }}" placeholder="Segunda ciudad..." class="compare-input">
+        </div>
+        <div class="compare-submit">
+            <button type="submit" class="btn btn-primary" style="margin-top:14px;">Comparar</button>
+        </div>
+    </form>
+</div>
+
+{% if error1 %}<div class="alert-error">{{ error1 }}</div>{% endif %}
+{% if error2 %}<div class="alert-error">{{ error2 }}</div>{% endif %}
+
+{% if clima1 or clima2 %}
+<div class="compare-grid">
+
+    {% if clima1 %}
+    <div class="compare-card">
+        {% if clima1 and clima2 %}
+            {% if clima1.temperatura > clima2.temperatura %}
+                <div class="compare-winner">🌡️ Más caliente</div>
+            {% elif clima1.humedad < clima2.humedad %}
+                <div class="compare-winner">💧 Más seco</div>
+            {% endif %}
+        {% endif %}
+        <div class="compare-city-name">{{ clima1.ciudad }}</div>
+        <div class="compare-country">{{ clima1.pais }}</div>
+        <div class="compare-temp-row">
+            <div class="compare-temp">{{ clima1.temperatura }}°</div>
+            <img src="https://openweathermap.org/img/wn/{{ clima1.icono }}@2x.png" alt="Icono" class="compare-icon">
+        </div>
+        <div class="compare-desc">{{ clima1.descripcion }}</div>
+        <div class="compare-metrics">
+            <div class="compare-metric"><div class="lbl">Sensación</div><div class="val">{{ clima1.sensacion_termica }}°C</div></div>
+            <div class="compare-metric"><div class="lbl">Humedad</div><div class="val">{{ clima1.humedad }}%</div></div>
+            <div class="compare-metric"><div class="lbl">Viento</div><div class="val">{{ clima1.viento_velocidad }} m/s</div></div>
+            <div class="compare-metric"><div class="lbl">Presión</div><div class="val">{{ clima1.presion }} hPa</div></div>
+            <div class="compare-metric"><div class="lbl">Mínima</div><div class="val">{{ clima1.temp_min }}°C</div></div>
+            <div class="compare-metric"><div class="lbl">Máxima</div><div class="val">{{ clima1.temp_max }}°C</div></div>
+        </div>
+    </div>
+    {% else %}
+    <div class="compare-empty-card">Ingresá la primera ciudad</div>
+    {% endif %}
+
+    {% if clima2 %}
+    <div class="compare-card">
+        {% if clima1 and clima2 %}
+            {% if clima2.temperatura > clima1.temperatura %}
+                <div class="compare-winner">🌡️ Más caliente</div>
+            {% elif clima2.humedad < clima1.humedad %}
+                <div class="compare-winner">💧 Más seco</div>
+            {% endif %}
+        {% endif %}
+        <div class="compare-city-name">{{ clima2.ciudad }}</div>
+        <div class="compare-country">{{ clima2.pais }}</div>
+        <div class="compare-temp-row">
+            <div class="compare-temp">{{ clima2.temperatura }}°</div>
+            <img src="https://openweathermap.org/img/wn/{{ clima2.icono }}@2x.png" alt="Icono" class="compare-icon">
+        </div>
+        <div class="compare-desc">{{ clima2.descripcion }}</div>
+        <div class="compare-metrics">
+            <div class="compare-metric"><div class="lbl">Sensación</div><div class="val">{{ clima2.sensacion_termica }}°C</div></div>
+            <div class="compare-metric"><div class="lbl">Humedad</div><div class="val">{{ clima2.humedad }}%</div></div>
+            <div class="compare-metric"><div class="lbl">Viento</div><div class="val">{{ clima2.viento_velocidad }} m/s</div></div>
+            <div class="compare-metric"><div class="lbl">Presión</div><div class="val">{{ clima2.presion }} hPa</div></div>
+            <div class="compare-metric"><div class="lbl">Mínima</div><div class="val">{{ clima2.temp_min }}°C</div></div>
+            <div class="compare-metric"><div class="lbl">Máxima</div><div class="val">{{ clima2.temp_max }}°C</div></div>
+        </div>
+    </div>
+    {% else %}
+    <div class="compare-empty-card">Ingresá la segunda ciudad</div>
+    {% endif %}
+
+</div>
+
+{% if clima1 and clima2 %}
+<div class="compare-chart-wrap">
+    <div class="compare-chart-title">Comparación de indicadores</div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <canvas id="compareChart" height="80"></canvas>
+    <script>
+    new Chart(document.getElementById('compareChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Temperatura °C', 'Sensación °C', 'Humedad %', 'Viento m/s'],
+            datasets: [
+                {
+                    label: '{{ clima1.ciudad }}',
+                    data: [{{ clima1.temperatura|unlocalize }}, {{ clima1.sensacion_termica|unlocalize }}, {{ clima1.humedad }}, {{ clima1.viento_velocidad|unlocalize }}],
+                    backgroundColor: 'rgba(59,130,246,0.75)',
+                    borderRadius: 8,
+                },
+                {
+                    label: '{{ clima2.ciudad }}',
+                    data: [{{ clima2.temperatura|unlocalize }}, {{ clima2.sensacion_termica|unlocalize }}, {{ clima2.humedad }}, {{ clima2.viento_velocidad|unlocalize }}],
+                    backgroundColor: 'rgba(245,158,11,0.75)',
+                    borderRadius: 8,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#94a3b8', font: { weight: '700', family: 'Inter' } } } },
+            scales: {
+                x: { ticks: { color: '#94a3b8', font: { family: 'Inter', weight: '600' } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#94a3b8', font: { family: 'Inter' } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+    </script>
+</div>
+{% endif %}
+
+{% endif %}
+
+{% endblock %}

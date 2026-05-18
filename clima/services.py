@@ -329,6 +329,6 @@ def obtener_uv(lat, lon):
     else:
         riesgo, color = 'Extremo', '#a855f7'
 
-    resultado = {'valor': valor, 'riesgo': riesgo, 'color': color}
+    resultado = {'valor': valor, 'riesgo': riesgo, 'color': color, 'percent': min(100, round(valor / 11 * 100))}
     cache.set(cache_key, resultado, 600)
     return resultado

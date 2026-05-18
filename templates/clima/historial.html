@@ -14,7 +14,10 @@
     </form>
 
     <div class="section-actions">
-        <a href="{% url 'vaciar_historial' %}" class="btn-small btn-delete clear-link">🗑 Vaciar historial</a>
+        <form method="post" action="{% url 'vaciar_historial' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-small btn-delete clear-link">🗑 Vaciar historial</button>
+        </form>
     </div>
 
     <style>
@@ -72,10 +75,14 @@
                                 <td>
                                     <div class="actions">
                                         <a href="{% url 'detalle' consulta.id %}" class="btn-small btn-view">Detalle</a>
-                                        <a href="{% url 'toggle_favorita' consulta.id %}" class="btn-small btn-fav">
-                                            {% if consulta.favorita %}Quitar{% else %}Favorita{% endif %}
-                                        </a>
-                                        <a href="{% url 'eliminar_consulta' consulta.id %}" class="btn-small btn-delete delete-link">Eliminar</a>
+                                        <form method="post" action="{% url 'toggle_favorita' consulta.id %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-small btn-fav">{% if consulta.favorita %}Quitar{% else %}Favorita{% endif %}</button>
+                                        </form>
+                                        <form method="post" action="{% url 'eliminar_consulta' consulta.id %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-small btn-delete delete-link">Eliminar</button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>

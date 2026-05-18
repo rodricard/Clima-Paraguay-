@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.db.models import Avg, Count
 from django.core.paginator import Paginator
 from .forms import CiudadForm
+from django.core.cache import cache
 from .services import (
     obtener_clima,
     obtener_pronostico,
@@ -11,6 +12,7 @@ from .services import (
     obtener_sugerencias_ciudades,
     obtener_calidad_aire,
     obtener_uv,
+    API_KEY as OW_API_KEY,
     ERROR_CIUDAD_NO_ENCONTRADA,
     ERROR_API_KEY,
     ERROR_LIMITE,
@@ -19,6 +21,13 @@ from .services import (
     ERROR_SERVIDOR,
 )
 from .models import ConsultaClima
+
+
+def _get_client_ip(request):
+    forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', '')
 
 MENSAJES_ERROR = {
     ERROR_CIUDAD_NO_ENCONTRADA: 'No encontramos esa ciudad. Verificá el nombre e intentá de nuevo.',
@@ -131,6 +140,7 @@ def inicio(request):
         'error': error,
         'fondo_clima': fondo_clima,
         'origen_geo': origen_geo,
+        'ow_api_key': OW_API_KEY,
     })
 
 
@@ -163,20 +173,23 @@ def detalle(request, consulta_id):
 
 
 def eliminar_consulta(request, consulta_id):
-    consulta = get_object_or_404(ConsultaClima, id=consulta_id)
-    consulta.delete()
+    if request.method == 'POST':
+        consulta = get_object_or_404(ConsultaClima, id=consulta_id)
+        consulta.delete()
     return redirect('historial')
 
 
 def vaciar_historial(request):
-    ConsultaClima.objects.all().delete()
+    if request.method == 'POST':
+        ConsultaClima.objects.all().delete()
     return redirect('historial')
 
 
 def toggle_favorita(request, consulta_id):
-    consulta = get_object_or_404(ConsultaClima, id=consulta_id)
-    consulta.favorita = not consulta.favorita
-    consulta.save()
+    if request.method == 'POST':
+        consulta = get_object_or_404(ConsultaClima, id=consulta_id)
+        consulta.favorita = not consulta.favorita
+        consulta.save()
     return redirect('historial')
 
 
@@ -224,8 +237,46 @@ def estadisticas(request):
 
 
 def autocomplete_ciudades(request):
-    query = request.GET.get('q', '').strip()
+    ip = _get_client_ip(request)
+    rl_key = f"rl_ac_{ip}"
+    count = cache.get(rl_key, 0)
+    if count >= 30:
+        return JsonResponse([], safe=False)
+    cache.set(rl_key, count + 1, 60)
+
+    query = request.GET.get('q', '').strip()[:100]
     if len(query) < 2:
         return JsonResponse([], safe=False)
     sugerencias = obtener_sugerencias_ciudades(query)
     return JsonResponse(sugerencias, safe=False)
+
+
+def comparar(request):
+    ciudad1 = request.GET.get('ciudad1', '').strip()
+    ciudad2 = request.GET.get('ciudad2', '').strip()
+    clima1 = clima2 = None
+    error1 = error2 = None
+
+    if ciudad1:
+        r = obtener_clima(ciudad1)
+        if _es_error(r):
+            error1 = MENSAJES_ERROR.get(r, MENSAJES_ERROR[ERROR_SERVIDOR])
+        else:
+            clima1 = r
+
+    if ciudad2:
+        r = obtener_clima(ciudad2)
+        if _es_error(r):
+            error2 = MENSAJES_ERROR.get(r, MENSAJES_ERROR[ERROR_SERVIDOR])
+        else:
+            clima2 = r
+
+    return render(request, 'clima/comparar.html', {
+        'ciudad1': ciudad1,
+        'ciudad2': ciudad2,
+        'clima1': clima1,
+        'clima2': clima2,
+        'error1': error1,
+        'error2': error2,
+        'fondo_clima': 'default',
+    })

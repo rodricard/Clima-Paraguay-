@@ -812,6 +812,7 @@
                 <a href="{% url 'historial' %}"    {% if request.resolver_match.url_name == 'historial' %}class="active"{% endif %}>Historial</a>
                 <a href="{% url 'favoritos' %}"    {% if request.resolver_match.url_name == 'favoritos' %}class="active"{% endif %}>Favoritos</a>
                 <a href="{% url 'estadisticas' %}" {% if request.resolver_match.url_name == 'estadisticas' %}class="active"{% endif %}>Estadísticas</a>
+                <a href="{% url 'comparar' %}"     {% if request.resolver_match.url_name == 'comparar' %}class="active"{% endif %}>Comparar</a>
             </nav>
         </header>
 
