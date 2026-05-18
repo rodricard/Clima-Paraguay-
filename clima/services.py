@@ -7,6 +7,8 @@ API_KEY = config('OPENWEATHER_API_KEY', default='')
 BASE_URL_CURRENT = "https://api.openweathermap.org/data/2.5/weather"
 BASE_URL_FORECAST = "https://api.openweathermap.org/data/2.5/forecast"
 BASE_URL_GEO = "http://api.openweathermap.org/geo/1.0/direct"
+BASE_URL_AIR = "http://api.openweathermap.org/data/2.5/air_pollution"
+BASE_URL_UV  = "http://api.openweathermap.org/data/2.5/uvi"
 
 ERROR_CIUDAD_NO_ENCONTRADA = 'ciudad_no_encontrada'
 ERROR_API_KEY = 'api_key_invalida'
@@ -128,6 +130,7 @@ def _mapear_pronostico(data):
                 'temperatura': round(item['main']['temp'], 1),
                 'descripcion': item['weather'][0]['description'],
                 'icono': item['weather'][0]['icon'],
+                'lluvia_prob': round(item.get('pop', 0) * 100),
             })
 
         # Solo próximas 24h (8 bloques de 3 horas)
@@ -156,6 +159,7 @@ def _mapear_pronostico(data):
 
         fecha_obj = datetime.fromtimestamp(item_medio_dia['dt'])
         temperaturas = [x['main']['temp'] for x in items]
+        probs = [x.get('pop', 0) for x in items]
 
         pronostico_dias.append({
             'dia': fecha_obj.strftime('%A').capitalize(),
@@ -164,6 +168,7 @@ def _mapear_pronostico(data):
             'temp_max': round(max(temperaturas), 1),
             'descripcion': item_medio_dia['weather'][0]['description'],
             'icono': item_medio_dia['weather'][0]['icon'],
+            'lluvia_prob': round(max(probs) * 100),
         })
 
     return {
@@ -255,3 +260,75 @@ def obtener_pronostico_por_coordenadas(lat, lon):
         return resultado
 
     return {'horas': [], 'dias': []}
+
+
+def obtener_calidad_aire(lat, lon):
+    cache_key = f"aqi_{lat}_{lon}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    params = {'lat': lat, 'lon': lon, 'appid': API_KEY}
+    try:
+        response = requests.get(BASE_URL_AIR, params=params, timeout=8)
+    except (requests.Timeout, requests.ConnectionError):
+        return None
+
+    if response.status_code != 200:
+        return None
+
+    items = response.json().get('list', [])
+    if not items:
+        return None
+
+    item = items[0]
+    aqi = item['main']['aqi']
+    comp = item['components']
+
+    LABELS = {1: 'Buena', 2: 'Aceptable', 3: 'Moderada', 4: 'Mala', 5: 'Muy mala'}
+    COLORS = {1: '#22c55e', 2: '#84cc16', 3: '#f59e0b', 4: '#f97316', 5: '#ef4444'}
+
+    resultado = {
+        'aqi': aqi,
+        'label': LABELS.get(aqi, 'Desconocida'),
+        'color': COLORS.get(aqi, '#94a3b8'),
+        'pm25': round(comp.get('pm2_5', 0), 1),
+        'pm10': round(comp.get('pm10', 0), 1),
+        'o3': round(comp.get('o3', 0), 1),
+        'no2': round(comp.get('no2', 0), 1),
+    }
+    cache.set(cache_key, resultado, 600)
+    return resultado
+
+
+def obtener_uv(lat, lon):
+    cache_key = f"uv_{lat}_{lon}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    params = {'lat': lat, 'lon': lon, 'appid': API_KEY}
+    try:
+        response = requests.get(BASE_URL_UV, params=params, timeout=8)
+    except (requests.Timeout, requests.ConnectionError):
+        return None
+
+    if response.status_code != 200:
+        return None
+
+    valor = round(response.json().get('value', 0), 1)
+
+    if valor <= 2:
+        riesgo, color = 'Bajo', '#22c55e'
+    elif valor <= 5:
+        riesgo, color = 'Moderado', '#f59e0b'
+    elif valor <= 7:
+        riesgo, color = 'Alto', '#f97316'
+    elif valor <= 10:
+        riesgo, color = 'Muy alto', '#ef4444'
+    else:
+        riesgo, color = 'Extremo', '#a855f7'
+
+    resultado = {'valor': valor, 'riesgo': riesgo, 'color': color}
+    cache.set(cache_key, resultado, 600)
+    return resultado

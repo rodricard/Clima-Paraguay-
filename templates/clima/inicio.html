@@ -212,6 +212,120 @@
         color: var(--text-muted); margin-top: 2px;
     }
 
+    /* Map skeleton */
+    .map-skeleton {
+        height: 340px;
+        background: var(--bg-elevated);
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 14px; position: relative; overflow: hidden;
+    }
+    .map-skeleton::after {
+        content: "";
+        position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+        animation: shimmer 1.6s infinite;
+        transform: translateX(-100%);
+    }
+    .map-skeleton-icon { font-size: 36px; opacity: 0.3; }
+    .map-skeleton p { color: var(--text-muted); font-size: 13px; font-weight: 600; }
+    @keyframes shimmer { to { transform: translateX(100%); } }
+
+    /* Lluvia prob badge */
+    .pop-badge {
+        display: inline-flex; align-items: center; gap: 3px;
+        font-size: 11px; font-weight: 700;
+        color: #7dd3fc;
+        margin-top: 4px;
+    }
+
+    /* AQI + UV section */
+    .env-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-top: 24px;
+    }
+
+    .env-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 22px 24px;
+        animation: fadeUp 0.4s ease;
+    }
+
+    .env-card-header {
+        font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.6px;
+        color: var(--text-muted); margin-bottom: 14px;
+    }
+
+    .env-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 6px 16px; border-radius: 999px;
+        font-size: 14px; font-weight: 800;
+        margin-bottom: 14px;
+        border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .env-aqi-num {
+        font-size: 40px; font-weight: 900;
+        letter-spacing: -2px; line-height: 1;
+        margin-bottom: 12px;
+    }
+
+    .env-particles {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .env-particle {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 10px 12px;
+    }
+
+    .env-particle .lbl {
+        font-size: 10px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.5px;
+        color: var(--text-muted); margin-bottom: 4px;
+    }
+
+    .env-particle .val {
+        font-size: 15px; font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    .uv-value {
+        font-size: 52px; font-weight: 900;
+        letter-spacing: -2px; line-height: 1;
+        margin-bottom: 8px;
+    }
+
+    .uv-bar-wrap {
+        background: var(--bg-elevated);
+        border-radius: 999px; height: 8px;
+        overflow: hidden; margin: 14px 0 10px;
+    }
+
+    .uv-bar {
+        height: 100%; border-radius: 999px;
+        background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444, #a855f7);
+        transition: width 0.5s ease;
+    }
+
+    .uv-scale {
+        display: flex; justify-content: space-between;
+        font-size: 10px; font-weight: 700;
+        color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+        .env-grid { grid-template-columns: 1fr; }
+    }
+
     /* Empty hint */
     .empty-hint {
         text-align: center;
@@ -371,6 +485,7 @@
                     <img src="https://openweathermap.org/img/wn/{{ hora.icono }}@2x.png" alt="Icono">
                     <div class="hourly-temp"><span class="temp-val" data-celsius="{{ hora.temperatura|unlocalize }}">{{ hora.temperatura }}</span> <span class="unit-label">°C</span></div>
                     <div class="hourly-desc">{{ hora.descripcion }}</div>
+                    {% if hora.lluvia_prob > 0 %}<div class="pop-badge">💧 {{ hora.lluvia_prob }}%</div>{% endif %}
                 </div>
                 {% endfor %}
             </div>
@@ -399,9 +514,60 @@
                     <div class="temp-min">Min: <span class="temp-val" data-celsius="{{ dia.temp_min|unlocalize }}">{{ dia.temp_min }}</span> <span class="unit-label">°C</span></div>
                 </div>
                 <div class="forecast-desc">{{ dia.descripcion }}</div>
+                {% if dia.lluvia_prob > 0 %}<div class="pop-badge">💧 {{ dia.lluvia_prob }}%</div>{% endif %}
             </div>
             {% endfor %}
         </div>
+    </div>
+    {% endif %}
+
+    {% if calidad_aire or uv %}
+    <div class="env-grid">
+
+        {% if calidad_aire %}
+        <div class="env-card">
+            <div class="env-card-header">🌫️ Calidad del aire</div>
+            <div class="env-badge" style="background: {{ calidad_aire.color }}22; color: {{ calidad_aire.color }}; border-color: {{ calidad_aire.color }}44;">
+                <span>ICA {{ calidad_aire.aqi }}/5</span>
+                <span>{{ calidad_aire.label }}</span>
+            </div>
+            <div class="env-particles">
+                <div class="env-particle">
+                    <div class="lbl">PM2.5</div>
+                    <div class="val">{{ calidad_aire.pm25 }} μg/m³</div>
+                </div>
+                <div class="env-particle">
+                    <div class="lbl">PM10</div>
+                    <div class="val">{{ calidad_aire.pm10 }} μg/m³</div>
+                </div>
+                <div class="env-particle">
+                    <div class="lbl">O₃</div>
+                    <div class="val">{{ calidad_aire.o3 }} μg/m³</div>
+                </div>
+                <div class="env-particle">
+                    <div class="lbl">NO₂</div>
+                    <div class="val">{{ calidad_aire.no2 }} μg/m³</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if uv %}
+        <div class="env-card">
+            <div class="env-card-header">☀️ Índice UV</div>
+            <div class="uv-value" style="color: {{ uv.color }};">{{ uv.valor }}</div>
+            <div class="env-badge" style="background: {{ uv.color }}22; color: {{ uv.color }}; border-color: {{ uv.color }}44;">
+                Riesgo {{ uv.riesgo }}
+            </div>
+            <div class="uv-bar-wrap">
+                <div class="uv-bar" style="width: {{ uv.valor|floatformat:0 }}0%;"></div>
+            </div>
+            <div class="uv-scale">
+                <span>Bajo</span><span>Mod.</span><span>Alto</span><span>Muy alto</span><span>Extremo</span>
+            </div>
+        </div>
+        {% endif %}
+
     </div>
     {% endif %}
 
@@ -418,7 +584,11 @@
         🗺️ Explorar en el mapa
         <div class="map-subtitle">Hacé click en cualquier punto para consultar el clima de esa ubicación</div>
     </div>
-    <div id="mapa-ciudad"></div>
+    <div id="mapSkeleton" class="map-skeleton">
+        <div class="map-skeleton-icon">🗺️</div>
+        <p>Cargando mapa...</p>
+    </div>
+    <div id="mapa-ciudad" style="display:none;"></div>
 </div>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -502,11 +672,22 @@ document.addEventListener('DOMContentLoaded', function () {
         {% if clima %}const cLat = {{ clima.latitud|unlocalize }}, cLon = {{ clima.longitud|unlocalize }}, cZoom = 10;
         {% else %}const cLat = -23.4, cLon = -58.4, cZoom = 6;{% endif %}
 
+        const mapaDiv = document.getElementById('mapa-ciudad');
+        const skeleton = document.getElementById('mapSkeleton');
+        mapaDiv.style.display = 'block';
+
         const mapa = L.map('mapa-ciudad').setView([cLat, cLon], cZoom);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             maxZoom: 18
         }).addTo(mapa);
+
+        let skelHidden = false;
+        function hideSkeleton() {
+            if (!skelHidden) { skelHidden = true; if (skeleton) skeleton.style.display = 'none'; mapa.invalidateSize(); }
+        }
+        tileLayer.on('tileload', hideSkeleton);
+        setTimeout(hideSkeleton, 3000);
 
         const mkResult = L.divIcon({
             html: `<div style="background:#3b82f6;border:3px solid #111827;border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:26px;height:26px;box-shadow:0 4px 14px rgba(59,130,246,0.5);"></div>`,

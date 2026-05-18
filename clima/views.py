@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.db.models import Avg, Count
+from django.core.paginator import Paginator
 from .forms import CiudadForm
 from .services import (
     obtener_clima,
@@ -8,6 +9,8 @@ from .services import (
     obtener_clima_por_coordenadas,
     obtener_pronostico_por_coordenadas,
     obtener_sugerencias_ciudades,
+    obtener_calidad_aire,
+    obtener_uv,
     ERROR_CIUDAD_NO_ENCONTRADA,
     ERROR_API_KEY,
     ERROR_LIMITE,
@@ -51,6 +54,8 @@ def obtener_fondo_por_clima(descripcion):
 def inicio(request):
     clima = None
     pronostico = {'horas': [], 'dias': []}
+    calidad_aire = None
+    uv = None
     error = None
     fondo_clima = 'default'
     origen_geo = False
@@ -66,6 +71,8 @@ def inicio(request):
             clima = None
         elif clima:
             pronostico = obtener_pronostico_por_coordenadas(lat, lon)
+            calidad_aire = obtener_calidad_aire(clima['latitud'], clima['longitud'])
+            uv = obtener_uv(clima['latitud'], clima['longitud'])
             fondo_clima = obtener_fondo_por_clima(clima['descripcion'])
             origen_geo = True
 
@@ -93,6 +100,8 @@ def inicio(request):
                 clima = None
             elif clima:
                 pronostico = obtener_pronostico(ciudad)
+                calidad_aire = obtener_calidad_aire(clima['latitud'], clima['longitud'])
+                uv = obtener_uv(clima['latitud'], clima['longitud'])
                 fondo_clima = obtener_fondo_por_clima(clima['descripcion'])
 
                 ConsultaClima.objects.create(
@@ -117,6 +126,8 @@ def inicio(request):
         'form': form,
         'clima': clima,
         'pronostico': pronostico,
+        'calidad_aire': calidad_aire,
+        'uv': uv,
         'error': error,
         'fondo_clima': fondo_clima,
         'origen_geo': origen_geo,
@@ -125,13 +136,17 @@ def inicio(request):
 
 def historial(request):
     busqueda = request.GET.get('q', '').strip()
-    consultas = ConsultaClima.objects.all().order_by('-fecha_consulta')
+    qs = ConsultaClima.objects.all().order_by('-fecha_consulta')
 
     if busqueda:
-        consultas = consultas.filter(ciudad__icontains=busqueda)
+        qs = qs.filter(ciudad__icontains=busqueda)
+
+    paginator = Paginator(qs, 15)
+    page_obj = paginator.get_page(request.GET.get('page', 1))
 
     return render(request, 'clima/historial.html', {
-        'consultas': consultas,
+        'consultas': page_obj,
+        'page_obj': page_obj,
         'busqueda': busqueda,
         'fondo_clima': 'default'
     })
